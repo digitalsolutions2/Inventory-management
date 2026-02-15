@@ -1,0 +1,570 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// MULTI-TENANCY & AUTH
+// ============================================================
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users      User[]
+  roles      Role[]
+  categories Category[]
+  items      Item[]
+  locations  Location[]
+  suppliers  Supplier[]
+
+  purchaseOrders   PurchaseOrder[]
+  receivings       Receiving[]
+  inventoryItems   InventoryItem[]
+  inventoryTxns    InventoryTransaction[]
+  internalRequests InternalRequest[]
+  transfers        Transfer[]
+  payments         Payment[]
+  auditLogs        AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  supabaseId   String   @unique @map("supabase_id")
+  tenantId     String   @map("tenant_id") @db.Uuid
+  email        String
+  fullName     String   @map("full_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  role   UserRole?
+
+  // Relations for workflow actions
+  createdPOs          PurchaseOrder[]    @relation("po_created_by")
+  approvedPOs         PurchaseOrder[]    @relation("po_approved_by")
+  procVerifications   Receiving[]        @relation("proc_verified_by")
+  qcInspections       Receiving[]        @relation("qc_inspected_by")
+  warehouseReceipts   Receiving[]        @relation("warehouse_received_by")
+  requestsCreated     InternalRequest[]  @relation("request_created_by")
+  requestsFulfilled   InternalRequest[]  @relation("request_fulfilled_by")
+  requestsConfirmed   InternalRequest[]  @relation("request_confirmed_by")
+  transfersCreated    Transfer[]         @relation("transfer_created_by")
+  transfersApproved   Transfer[]         @relation("transfer_approved_by")
+  transfersFulfilled  Transfer[]         @relation("transfer_fulfilled_by")
+  transfersReceived   Transfer[]         @relation("transfer_received_by")
+  paymentsRecorded    Payment[]
+  auditLogs           AuditLog[]
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String
+  description String?
+  permissions Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant     @relation(fields: [tenantId], references: [id])
+  users  UserRole[]
+
+  @@unique([tenantId, name])
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@map("user_roles")
+}
+
+// ============================================================
+// MASTER DATA
+// ============================================================
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String
+  description String?
+  parentId    String?  @map("parent_id") @db.Uuid
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant     @relation(fields: [tenantId], references: [id])
+  parent   Category?  @relation("category_tree", fields: [parentId], references: [id])
+  children Category[] @relation("category_tree")
+  items    Item[]
+
+  @@unique([tenantId, name])
+  @@map("categories")
+}
+
+model Item {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  code         String
+  name         String
+  description  String?
+  categoryId   String?  @map("category_id") @db.Uuid
+  uom          String   @default("EA")
+  minStock     Float    @default(0) @map("min_stock")
+  maxStock     Float    @default(0) @map("max_stock")
+  reorderPoint Float    @default(0) @map("reorder_point")
+  avgCost      Float    @default(0) @map("avg_cost")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  inventoryItems   InventoryItem[]
+  inventoryTxns    InventoryTransaction[]
+  poLines          PurchaseOrderLine[]
+  receivingLines   ReceivingLine[]
+  requestLines     InternalRequestLine[]
+  transferLines    TransferLine[]
+
+  @@unique([tenantId, code])
+  @@map("items")
+}
+
+model Location {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  code      String
+  name      String
+  type      LocationType
+  parentId  String?  @map("parent_id") @db.Uuid
+  qrCode    String?  @map("qr_code")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant     @relation(fields: [tenantId], references: [id])
+  parent   Location?  @relation("location_tree", fields: [parentId], references: [id])
+  children Location[] @relation("location_tree")
+
+  inventoryItems     InventoryItem[]
+  inventoryTxns      InventoryTransaction[]
+  receivings         Receiving[]
+  transfersFrom      Transfer[] @relation("transfer_from")
+  transfersTo        Transfer[] @relation("transfer_to")
+
+  @@unique([tenantId, code])
+  @@map("locations")
+}
+
+enum LocationType {
+  WAREHOUSE
+  ZONE
+  AISLE
+  SHELF
+  STORE
+  KITCHEN
+}
+
+model Supplier {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  code         String
+  name         String
+  contactName  String?  @map("contact_name")
+  email        String?
+  phone        String?
+  address      String?
+  paymentTerms Int      @default(30) @map("payment_terms")
+  rating       Float?   @default(0)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  purchaseOrders PurchaseOrder[]
+
+  @@unique([tenantId, code])
+  @@map("suppliers")
+}
+
+// ============================================================
+// PROCUREMENT
+// ============================================================
+
+model PurchaseOrder {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  poNumber      String   @map("po_number")
+  supplierId    String   @map("supplier_id") @db.Uuid
+  status        POStatus @default(DRAFT)
+  totalAmount   Float    @default(0) @map("total_amount")
+  currency      String   @default("SAR")
+  notes         String?
+  expectedDate  DateTime? @map("expected_date")
+  createdById   String   @map("created_by_id") @db.Uuid
+  approvedById  String?  @map("approved_by_id") @db.Uuid
+  approvedAt    DateTime? @map("approved_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  createdBy  User     @relation("po_created_by", fields: [createdById], references: [id])
+  approvedBy User?    @relation("po_approved_by", fields: [approvedById], references: [id])
+
+  lines      PurchaseOrderLine[]
+  receivings Receiving[]
+  payments   Payment[]
+
+  @@unique([tenantId, poNumber])
+  @@map("purchase_orders")
+}
+
+enum POStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+model PurchaseOrderLine {
+  id              String @id @default(uuid()) @db.Uuid
+  purchaseOrderId String @map("purchase_order_id") @db.Uuid
+  itemId          String @map("item_id") @db.Uuid
+  quantity        Float
+  unitCost        Float  @map("unit_cost")
+  totalCost       Float  @map("total_cost")
+  receivedQty     Float  @default(0) @map("received_qty")
+  notes           String?
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  item          Item          @relation(fields: [itemId], references: [id])
+
+  @@map("purchase_order_lines")
+}
+
+// ============================================================
+// INBOUND RECEIVING (3-step workflow)
+// ============================================================
+
+model Receiving {
+  id                String          @id @default(uuid()) @db.Uuid
+  tenantId          String          @map("tenant_id") @db.Uuid
+  receivingNumber   String          @map("receiving_number")
+  purchaseOrderId   String          @map("purchase_order_id") @db.Uuid
+  locationId        String?         @map("location_id") @db.Uuid
+  status            ReceivingStatus @default(PENDING)
+
+  // Step 1: Procurement verification
+  procVerifiedById  String?  @map("proc_verified_by_id") @db.Uuid
+  procVerifiedAt    DateTime? @map("proc_verified_at")
+  procNotes         String?  @map("proc_notes")
+
+  // Step 2: QC inspection
+  qcInspectedById   String?  @map("qc_inspected_by_id") @db.Uuid
+  qcInspectedAt     DateTime? @map("qc_inspected_at")
+  qcNotes           String?  @map("qc_notes")
+  qcResult          QCResult? @map("qc_result")
+
+  // Step 3: Warehouse receiving
+  warehouseReceivedById String? @map("warehouse_received_by_id") @db.Uuid
+  warehouseReceivedAt   DateTime? @map("warehouse_received_at")
+  warehouseNotes        String? @map("warehouse_notes")
+  batchNumber           String? @map("batch_number")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  location        Location? @relation(fields: [locationId], references: [id])
+  procVerifiedBy  User?     @relation("proc_verified_by", fields: [procVerifiedById], references: [id])
+  qcInspectedBy   User?     @relation("qc_inspected_by", fields: [qcInspectedById], references: [id])
+  warehouseReceivedBy User? @relation("warehouse_received_by", fields: [warehouseReceivedById], references: [id])
+
+  lines ReceivingLine[]
+
+  @@unique([tenantId, receivingNumber])
+  @@map("receivings")
+}
+
+enum ReceivingStatus {
+  PENDING
+  PROC_VERIFIED
+  QC_APPROVED
+  QC_REJECTED
+  RECEIVED
+  CANCELLED
+}
+
+enum QCResult {
+  ACCEPTED
+  PARTIAL
+  REJECTED
+}
+
+model ReceivingLine {
+  id            String @id @default(uuid()) @db.Uuid
+  receivingId   String @map("receiving_id") @db.Uuid
+  itemId        String @map("item_id") @db.Uuid
+  expectedQty   Float  @map("expected_qty")
+  receivedQty   Float  @default(0) @map("received_qty")
+  acceptedQty   Float  @default(0) @map("accepted_qty")
+  rejectedQty   Float  @default(0) @map("rejected_qty")
+  unitCost      Float  @map("unit_cost")
+  notes         String?
+
+  receiving Receiving @relation(fields: [receivingId], references: [id], onDelete: Cascade)
+  item      Item      @relation(fields: [itemId], references: [id])
+
+  @@map("receiving_lines")
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+
+model InventoryItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  itemId      String   @map("item_id") @db.Uuid
+  locationId  String   @map("location_id") @db.Uuid
+  quantity    Float    @default(0)
+  avgCost     Float    @default(0) @map("avg_cost")
+  lastCountAt DateTime? @map("last_count_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  item     Item     @relation(fields: [itemId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@unique([tenantId, itemId, locationId])
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id            String          @id @default(uuid()) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  itemId        String          @map("item_id") @db.Uuid
+  locationId    String          @map("location_id") @db.Uuid
+  type          TransactionType
+  quantity      Float
+  unitCost      Float?          @map("unit_cost")
+  referenceType String?         @map("reference_type")
+  referenceId   String?         @map("reference_id") @db.Uuid
+  notes         String?
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  item     Item     @relation(fields: [itemId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@index([tenantId, itemId])
+  @@index([tenantId, locationId])
+  @@index([referenceType, referenceId])
+  @@map("inventory_transactions")
+}
+
+enum TransactionType {
+  INBOUND
+  OUTBOUND
+  TRANSFER_IN
+  TRANSFER_OUT
+  ADJUSTMENT
+}
+
+// ============================================================
+// OUTBOUND (Internal Requests)
+// ============================================================
+
+model InternalRequest {
+  id              String                @id @default(uuid()) @db.Uuid
+  tenantId        String                @map("tenant_id") @db.Uuid
+  requestNumber   String                @map("request_number")
+  status          InternalRequestStatus @default(PENDING)
+  notes           String?
+  createdById     String                @map("created_by_id") @db.Uuid
+  fulfilledById   String?               @map("fulfilled_by_id") @db.Uuid
+  fulfilledAt     DateTime?             @map("fulfilled_at")
+  confirmedById   String?               @map("confirmed_by_id") @db.Uuid
+  confirmedAt     DateTime?             @map("confirmed_at")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
+  createdBy   User   @relation("request_created_by", fields: [createdById], references: [id])
+  fulfilledBy User?  @relation("request_fulfilled_by", fields: [fulfilledById], references: [id])
+  confirmedBy User?  @relation("request_confirmed_by", fields: [confirmedById], references: [id])
+
+  lines InternalRequestLine[]
+
+  @@unique([tenantId, requestNumber])
+  @@map("internal_requests")
+}
+
+enum InternalRequestStatus {
+  PENDING
+  APPROVED
+  FULFILLING
+  ISSUED
+  CONFIRMED
+  CANCELLED
+}
+
+model InternalRequestLine {
+  id                String @id @default(uuid()) @db.Uuid
+  internalRequestId String @map("internal_request_id") @db.Uuid
+  itemId            String @map("item_id") @db.Uuid
+  requestedQty      Float  @map("requested_qty")
+  issuedQty         Float  @default(0) @map("issued_qty")
+  confirmedQty      Float  @default(0) @map("confirmed_qty")
+  notes             String?
+
+  internalRequest InternalRequest @relation(fields: [internalRequestId], references: [id], onDelete: Cascade)
+  item            Item            @relation(fields: [itemId], references: [id])
+
+  @@map("internal_request_lines")
+}
+
+// ============================================================
+// TRANSFERS
+// ============================================================
+
+model Transfer {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  transferNumber  String         @map("transfer_number")
+  fromLocationId  String         @map("from_location_id") @db.Uuid
+  toLocationId    String         @map("to_location_id") @db.Uuid
+  status          TransferStatus @default(PENDING)
+  notes           String?
+  createdById     String         @map("created_by_id") @db.Uuid
+  approvedById    String?        @map("approved_by_id") @db.Uuid
+  approvedAt      DateTime?      @map("approved_at")
+  fulfilledById   String?        @map("fulfilled_by_id") @db.Uuid
+  fulfilledAt     DateTime?      @map("fulfilled_at")
+  receivedById    String?        @map("received_by_id") @db.Uuid
+  receivedAt      DateTime?      @map("received_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  fromLocation Location @relation("transfer_from", fields: [fromLocationId], references: [id])
+  toLocation   Location @relation("transfer_to", fields: [toLocationId], references: [id])
+  createdBy    User     @relation("transfer_created_by", fields: [createdById], references: [id])
+  approvedBy   User?    @relation("transfer_approved_by", fields: [approvedById], references: [id])
+  fulfilledBy  User?    @relation("transfer_fulfilled_by", fields: [fulfilledById], references: [id])
+  receivedBy   User?    @relation("transfer_received_by", fields: [receivedById], references: [id])
+
+  lines TransferLine[]
+
+  @@unique([tenantId, transferNumber])
+  @@map("transfers")
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  IN_TRANSIT
+  RECEIVED
+  CANCELLED
+}
+
+model TransferLine {
+  id          String @id @default(uuid()) @db.Uuid
+  transferId  String @map("transfer_id") @db.Uuid
+  itemId      String @map("item_id") @db.Uuid
+  quantity    Float
+  receivedQty Float  @default(0) @map("received_qty")
+  notes       String?
+
+  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  item     Item     @relation(fields: [itemId], references: [id])
+
+  @@map("transfer_lines")
+}
+
+// ============================================================
+// FINANCE
+// ============================================================
+
+model Payment {
+  id              String        @id @default(uuid()) @db.Uuid
+  tenantId        String        @map("tenant_id") @db.Uuid
+  purchaseOrderId String        @map("purchase_order_id") @db.Uuid
+  amount          Float
+  currency        String        @default("SAR")
+  status          PaymentStatus @default(PENDING)
+  dueDate         DateTime?     @map("due_date")
+  paidAt          DateTime?     @map("paid_at")
+  paymentMethod   String?       @map("payment_method")
+  referenceNumber String?       @map("reference_number")
+  notes           String?
+  recordedById    String        @map("recorded_by_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  recordedBy    User          @relation(fields: [recordedById], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  userId        String?  @map("user_id") @db.Uuid
+  action        String
+  entityType    String   @map("entity_type")
+  entityId      String?  @map("entity_id") @db.Uuid
+  beforeData    Json?    @map("before_data")
+  afterData     Json?    @map("after_data")
+  ipAddress     String?  @map("ip_address")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, userId])
+  @@index([tenantId, createdAt])
+  @@map("audit_logs")
+}
