@@ -10,7 +10,10 @@
       "Bash(npx tsx:*)",
       "Bash(node --loader tsx:*)",
       "Bash(node --import tsx prisma/seed.mts:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx next dev:*)",
+      "Bash(node -e:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

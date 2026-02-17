@@ -8,6 +8,7 @@ if (process.env.DIRECT_URL) {
 
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+// @ts-expect-error - tsx runtime handles .ts imports
 const { PrismaClient } = await import("../src/generated/prisma/client.ts");
 import { createClient } from "@supabase/supabase-js";
 
