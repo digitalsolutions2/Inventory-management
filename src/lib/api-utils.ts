@@ -47,3 +47,25 @@ export function apiSuccess<T>(data: T, status = 200) {
 export function apiError(message: string, status = 400) {
   return NextResponse.json({ success: false, error: message }, { status });
 }
+
+export async function createAuditLog(params: {
+  tenantId: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  beforeData?: unknown;
+  afterData?: unknown;
+}) {
+  await prisma.auditLog.create({
+    data: {
+      tenantId: params.tenantId,
+      userId: params.userId,
+      action: params.action,
+      entityType: params.entityType,
+      entityId: params.entityId,
+      beforeData: params.beforeData ? (params.beforeData as never) : undefined,
+      afterData: params.afterData ? (params.afterData as never) : undefined,
+    },
+  });
+}

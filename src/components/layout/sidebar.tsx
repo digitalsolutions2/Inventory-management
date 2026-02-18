@@ -14,7 +14,7 @@ const navigation = [
   { name: "Locations", href: "/locations", icon: "📍" },
   { name: "Suppliers", href: "/suppliers", icon: "🏭" },
   { name: "Purchase Orders", href: "/procurement", icon: "📋" },
-  { name: "Receiving", href: "/inventory", icon: "📥" },
+  { name: "Receiving", href: "/receiving", icon: "📥" },
   { name: "Internal Requests", href: "/requests", icon: "📤" },
   { name: "Transfers", href: "/transfers", icon: "🔄" },
   { name: "Reports", href: "/reports", icon: "📈" },
