@@ -13,7 +13,15 @@
       "Bash(curl:*)",
       "Bash(npx next dev:*)",
       "Bash(node -e:*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "Bash(xargs:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm run dev:*)",
+      "Bash(nslookup:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }

@@ -17,7 +17,10 @@ const navigation = [
   { name: "Receiving", href: "/receiving", icon: "📥" },
   { name: "Internal Requests", href: "/requests", icon: "📤" },
   { name: "Transfers", href: "/transfers", icon: "🔄" },
+  { name: "Store Ordering", href: "/store/order", icon: "🛒" },
+  { name: "Finance", href: "/finance", icon: "💰" },
   { name: "Reports", href: "/reports", icon: "📈" },
+  { name: "Audit Logs", href: "/admin/audit-logs", icon: "🔍" },
   { name: "Settings", href: "/settings", icon: "⚙️" },
 ];
 
