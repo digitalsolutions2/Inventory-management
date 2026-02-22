@@ -106,68 +106,80 @@ export default function PODetailPage() {
 
   const handleSubmit = async () => {
     setActionLoading(true);
-    const res = await fetch(`/api/purchase-orders/${id}/submit`, { method: "POST" });
-    const json = await res.json();
-    if (json.success) {
-      message.success("PO submitted for approval");
-      fetchPO();
-    } else {
-      message.error(json.error || "Failed");
+    try {
+      const res = await fetch(`/api/purchase-orders/${id}/submit`, { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        message.success("PO submitted for approval");
+        fetchPO();
+      } else {
+        message.error(json.error || "Failed to submit");
+      }
+    } catch {
+      message.error("Network error");
     }
     setActionLoading(false);
   };
 
   const handleApprove = async () => {
     setActionLoading(true);
-    const res = await fetch(`/api/purchase-orders/${id}/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "approve" }),
-    });
-    const json = await res.json();
-    if (json.success) {
-      message.success("PO approved");
-      fetchPO();
-    } else {
-      message.error(json.error || "Failed");
+    try {
+      const res = await fetch(`/api/purchase-orders/${id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        message.success("PO approved");
+        fetchPO();
+      } else {
+        message.error(json.error || "Failed to approve");
+      }
+    } catch {
+      message.error("Network error");
     }
     setActionLoading(false);
   };
 
   const handleReject = async () => {
     setActionLoading(true);
-    const res = await fetch(`/api/purchase-orders/${id}/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reject", reason: rejectReason }),
-    });
-    const json = await res.json();
-    if (json.success) {
-      message.success("PO rejected");
-      setRejectModalOpen(false);
-      setRejectReason("");
-      fetchPO();
-    } else {
-      message.error(json.error || "Failed");
+    try {
+      const res = await fetch(`/api/purchase-orders/${id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject", reason: rejectReason }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        message.success("PO rejected");
+        setRejectModalOpen(false);
+        setRejectReason("");
+        fetchPO();
+      } else {
+        message.error(json.error || "Failed to reject");
+      }
+    } catch {
+      message.error("Network error");
     }
     setActionLoading(false);
   };
 
   const handleMarkSent = async () => {
     setActionLoading(true);
-    const res = await fetch(`/api/purchase-orders/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "SENT" }),
-    });
-    // The PUT only allows DRAFT edits, so we handle SENT via a direct update
-    // For now, we'll use a simple approach
-    const json = await res.json();
-    if (json.success) {
-      message.success("PO marked as sent");
-      fetchPO();
-    } else {
-      message.error(json.error || "Only draft POs can be edited via this endpoint");
+    try {
+      const res = await fetch(`/api/purchase-orders/${id}/send`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (json.success) {
+        message.success("PO marked as sent to supplier");
+        fetchPO();
+      } else {
+        message.error(json.error || "Failed to mark as sent");
+      }
+    } catch {
+      message.error("Network error");
     }
     setActionLoading(false);
   };

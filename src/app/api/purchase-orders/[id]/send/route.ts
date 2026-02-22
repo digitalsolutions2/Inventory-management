@@ -14,41 +14,41 @@ export async function POST(
 ) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
-  if (!checkPermission(user, "po:create")) return apiError("Forbidden", 403);
+  if (!checkPermission(user, "po:edit")) return apiError("Forbidden", 403);
 
   try {
     const { id } = await params;
     const po = await prisma.purchaseOrder.findFirst({
       where: { id, tenantId: user.tenantId },
-      include: { lines: true },
     });
 
     if (!po) return apiError("Purchase order not found", 404);
-    if (po.status !== "DRAFT") return apiError("Only draft POs can be submitted");
-    if (po.lines.length === 0) return apiError("PO must have at least one line item");
+    if (po.status !== "APPROVED")
+      return apiError("Only approved POs can be marked as sent");
 
     const updated = await prisma.purchaseOrder.update({
       where: { id },
-      data: { status: "PENDING_APPROVAL" },
+      data: { status: "SENT" },
       include: {
         supplier: { select: { id: true, name: true, code: true } },
         createdBy: { select: { id: true, fullName: true } },
+        approvedBy: { select: { id: true, fullName: true } },
       },
     });
 
     await createAuditLog({
       tenantId: user.tenantId,
       userId: user.id,
-      action: "po:submit",
+      action: "po:send",
       entityType: "PurchaseOrder",
       entityId: id,
-      beforeData: { status: "DRAFT" },
-      afterData: { status: "PENDING_APPROVAL" },
+      beforeData: { status: "APPROVED" },
+      afterData: { status: "SENT" },
     });
 
     return apiSuccess(updated);
   } catch (e) {
-    console.error("POST /api/purchase-orders/[id]/submit error:", e);
-    return apiError("Failed to submit purchase order", 500);
+    console.error("POST /api/purchase-orders/[id]/send error:", e);
+    return apiError("Failed to mark PO as sent", 500);
   }
 }

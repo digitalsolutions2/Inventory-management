@@ -43,25 +43,33 @@ export default function PendingApprovalsPage() {
     fetchTransfers();
   }, [fetchTransfers]);
 
+  const [actionLoading, setActionLoading] = useState(false);
+
   const handleAction = async (id: string, action: "approve" | "reject") => {
-    const res = await fetch(`/api/transfers/${id}/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action,
-        ...(action === "reject" && { reason: rejectReason }),
-      }),
-    });
-    const json = await res.json();
-    if (json.success) {
-      message.success(
-        action === "approve" ? "Transfer approved!" : "Transfer rejected."
-      );
-      setRejectReason("");
-      fetchTransfers();
-    } else {
-      message.error(json.error || `Failed to ${action}`);
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/transfers/${id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          ...(action === "reject" && { reason: rejectReason }),
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        message.success(
+          action === "approve" ? "Transfer approved!" : "Transfer rejected."
+        );
+        setRejectReason("");
+        fetchTransfers();
+      } else {
+        message.error(json.error || `Failed to ${action}`);
+      }
+    } catch {
+      message.error("Network error");
     }
+    setActionLoading(false);
   };
 
   const columns: ColumnsType<TransferRecord> = [
@@ -116,6 +124,7 @@ export default function PendingApprovalsPage() {
               size="small"
               icon={<CheckOutlined />}
               onClick={() => handleAction(record.id, "approve")}
+              loading={actionLoading}
             >
               Approve
             </Button>
@@ -133,7 +142,7 @@ export default function PendingApprovalsPage() {
               okText="Reject"
               okButtonProps={{ danger: true }}
             >
-              <Button danger size="small" icon={<CloseOutlined />}>
+              <Button danger size="small" icon={<CloseOutlined />} disabled={actionLoading}>
                 Reject
               </Button>
             </Popconfirm>

@@ -57,15 +57,37 @@ export async function createAuditLog(params: {
   beforeData?: unknown;
   afterData?: unknown;
 }) {
-  await prisma.auditLog.create({
-    data: {
-      tenantId: params.tenantId,
-      userId: params.userId,
-      action: params.action,
-      entityType: params.entityType,
-      entityId: params.entityId,
-      beforeData: params.beforeData ? (params.beforeData as never) : undefined,
-      afterData: params.afterData ? (params.afterData as never) : undefined,
-    },
-  });
+  try {
+    if (!params.tenantId || !params.userId) return;
+    await prisma.auditLog.create({
+      data: {
+        tenantId: params.tenantId,
+        userId: params.userId,
+        action: params.action,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        beforeData: params.beforeData ? (params.beforeData as never) : undefined,
+        afterData: params.afterData ? (params.afterData as never) : undefined,
+      },
+    });
+  } catch (e) {
+    console.error("Failed to create audit log:", e);
+  }
+}
+
+/** Validate that a value is a positive finite number */
+export function isPositiveNumber(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v) && v > 0;
+}
+
+/** Validate that a value is a non-negative finite number */
+export function isNonNegativeNumber(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v) && v >= 0;
+}
+
+/** Sanitize pagination params */
+export function sanitizePagination(page: string | null, pageSize: string | null) {
+  const p = Math.max(1, parseInt(page || "1") || 1);
+  const ps = Math.min(100, Math.max(1, parseInt(pageSize || "20") || 20));
+  return { page: p, pageSize: ps };
 }

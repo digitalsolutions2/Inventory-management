@@ -72,11 +72,16 @@ export default function StoreOrderPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchLocations = useCallback(async () => {
-    const res = await fetch("/api/locations?pageSize=100");
-    const json = await res.json();
-    if (json.success) setLocations(json.data.data || []);
+    try {
+      const res = await fetch("/api/locations?pageSize=100");
+      const json = await res.json();
+      if (json.success) setLocations(json.data.data || []);
+      else message.error("Failed to load locations");
+    } catch {
+      message.error("Network error loading locations");
+    }
     setLoading(false);
-  }, []);
+  }, [message]);
 
   useEffect(() => {
     fetchLocations();
@@ -84,14 +89,20 @@ export default function StoreOrderPage() {
 
   const fetchStoreInventory = useCallback(async () => {
     if (!storeLocationId) return;
-    const res = await fetch(
-      `/api/inventory?locationId=${storeLocationId}&pageSize=200`
-    );
-    const json = await res.json();
-    if (json.success) {
-      setInventory(json.data.data || []);
+    try {
+      const res = await fetch(
+        `/api/inventory?locationId=${storeLocationId}&pageSize=200`
+      );
+      const json = await res.json();
+      if (json.success) {
+        setInventory(json.data.data || []);
+      } else {
+        message.error("Failed to load inventory");
+      }
+    } catch {
+      message.error("Network error loading inventory");
     }
-  }, [storeLocationId]);
+  }, [storeLocationId, message]);
 
   useEffect(() => {
     fetchStoreInventory();
@@ -150,28 +161,32 @@ export default function StoreOrderPage() {
     }
 
     setSubmitting(true);
-    const res = await fetch("/api/transfers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fromLocationId: warehouseLocationId,
-        toLocationId: storeLocationId,
-        lines: orderLines.map((l) => ({
-          itemId: l.itemId,
-          quantity: l.orderQty,
-        })),
-        notes: `Store replenishment order from smart ordering`,
-      }),
-    });
+    try {
+      const res = await fetch("/api/transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromLocationId: warehouseLocationId,
+          toLocationId: storeLocationId,
+          lines: orderLines.map((l) => ({
+            itemId: l.itemId,
+            quantity: l.orderQty,
+          })),
+          notes: `Store replenishment order from smart ordering`,
+        }),
+      });
 
-    const json = await res.json();
-    if (json.success) {
-      message.success(
-        `Transfer ${json.data.transferNumber} created! ${json.data.status === "PENDING" ? "Awaiting approval." : "Ready for fulfillment."}`
-      );
-      router.push("/transfers/fulfill");
-    } else {
-      message.error(json.error || "Failed to create transfer");
+      const json = await res.json();
+      if (json.success) {
+        message.success(
+          `Transfer ${json.data.transferNumber} created! ${json.data.status === "PENDING" ? "Awaiting approval." : "Ready for fulfillment."}`
+        );
+        router.push("/transfers/fulfill");
+      } else {
+        message.error(json.error || "Failed to create transfer");
+      }
+    } catch {
+      message.error("Network error");
     }
     setSubmitting(false);
   };

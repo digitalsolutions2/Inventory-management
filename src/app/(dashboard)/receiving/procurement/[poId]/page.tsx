@@ -10,6 +10,7 @@ import {
   Alert,
   Spin,
   App,
+  Popconfirm,
 } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
@@ -279,16 +280,23 @@ export default function ProcurementVerifyPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button
-          type="primary"
-          size="large"
-          icon={<CheckCircleOutlined />}
-          onClick={handleSubmit}
-          loading={submitting}
+        <Popconfirm
+          title="Submit procurement verification?"
+          description="This will advance the receiving to QC inspection."
+          onConfirm={handleSubmit}
+          okText="Submit"
           disabled={isSameUser || lineInputs.length === 0}
         >
-          Submit Verification
-        </Button>
+          <Button
+            type="primary"
+            size="large"
+            icon={<CheckCircleOutlined />}
+            loading={submitting}
+            disabled={isSameUser || lineInputs.length === 0}
+          >
+            Submit Verification
+          </Button>
+        </Popconfirm>
       </div>
     </div>
   );

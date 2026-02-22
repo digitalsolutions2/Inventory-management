@@ -46,32 +46,38 @@ export default function ValuationPage() {
 
   const handleExport = async () => {
     if (!data) return;
-    const res = await fetch("/api/export/excel", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: "Inventory Valuation Report",
-        columns: [
-          { header: "Item Code", key: "itemCode", width: 15 },
-          { header: "Item Name", key: "itemName", width: 30 },
-          { header: "UOM", key: "uom", width: 8 },
-          { header: "Category", key: "category", width: 20 },
-          { header: "Location", key: "location", width: 20 },
-          { header: "Quantity", key: "quantity", width: 12 },
-          { header: "Avg Cost", key: "avgCost", width: 12 },
-          { header: "Total Value", key: "totalValue", width: 15 },
-        ],
-        rows: data.rows,
-      }),
-    });
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Inventory_Valuation.xlsx";
-      a.click();
-      URL.revokeObjectURL(url);
+    try {
+      const res = await fetch("/api/export/excel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Inventory Valuation Report",
+          columns: [
+            { header: "Item Code", key: "itemCode", width: 15 },
+            { header: "Item Name", key: "itemName", width: 30 },
+            { header: "UOM", key: "uom", width: 8 },
+            { header: "Category", key: "category", width: 20 },
+            { header: "Location", key: "location", width: 20 },
+            { header: "Quantity", key: "quantity", width: 12 },
+            { header: "Avg Cost", key: "avgCost", width: 12 },
+            { header: "Total Value", key: "totalValue", width: 15 },
+          ],
+          rows: data.rows,
+        }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Inventory_Valuation.xlsx";
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        message.error("Failed to export");
+      }
+    } catch {
+      message.error("Network error during export");
     }
   };
 

@@ -11,6 +11,7 @@ import {
   Spin,
   Tag,
   App,
+  Popconfirm,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -320,16 +321,23 @@ export default function WarehouseReceivePage() {
       </div>
 
       <div className="flex justify-end">
-        <Button
-          type="primary"
-          size="large"
-          icon={<CheckCircleOutlined />}
-          onClick={handleSubmit}
-          loading={submitting}
+        <Popconfirm
+          title="Confirm warehouse receipt?"
+          description="This will add accepted items to inventory. This action cannot be undone."
+          onConfirm={handleSubmit}
+          okText="Confirm Receipt"
           disabled={isBlocked || !locationId}
         >
-          Confirm Receipt
-        </Button>
+          <Button
+            type="primary"
+            size="large"
+            icon={<CheckCircleOutlined />}
+            loading={submitting}
+            disabled={isBlocked || !locationId}
+          >
+            Confirm Receipt
+          </Button>
+        </Popconfirm>
       </div>
     </div>
   );

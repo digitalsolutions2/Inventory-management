@@ -69,24 +69,34 @@ export default function PaymentsPage() {
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({
-      page: String(page),
-      pageSize: "20",
-      ...(statusFilter && { status: statusFilter }),
-    });
-    const res = await fetch(`/api/payments?${params}`);
-    const json = await res.json();
-    if (json.success) {
-      setPayments(json.data.data);
-      setTotal(json.data.total);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: "20",
+        ...(statusFilter && { status: statusFilter }),
+      });
+      const res = await fetch(`/api/payments?${params}`);
+      const json = await res.json();
+      if (json.success) {
+        setPayments(json.data.data);
+        setTotal(json.data.total);
+      } else {
+        message.error("Failed to load payments");
+      }
+    } catch {
+      message.error("Network error loading payments");
     }
     setLoading(false);
-  }, [page, statusFilter]);
+  }, [page, statusFilter, message]);
 
   const fetchPOs = useCallback(async () => {
-    const res = await fetch("/api/purchase-orders?pageSize=100");
-    const json = await res.json();
-    if (json.success) setPos(json.data.data);
+    try {
+      const res = await fetch("/api/purchase-orders?pageSize=100");
+      const json = await res.json();
+      if (json.success) setPos(json.data.data);
+    } catch {
+      console.error("Failed to load POs");
+    }
   }, []);
 
   useEffect(() => {
@@ -99,27 +109,31 @@ export default function PaymentsPage() {
 
   const handleCreate = async (values: Record<string, unknown>) => {
     setSubmitting(true);
-    const res = await fetch("/api/payments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...values,
-        dueDate: values.dueDate
-          ? (values.dueDate as dayjs.Dayjs).toISOString()
-          : undefined,
-        paidAt: values.paidAt
-          ? (values.paidAt as dayjs.Dayjs).toISOString()
-          : undefined,
-      }),
-    });
-    const json = await res.json();
-    if (json.success) {
-      message.success("Payment recorded!");
-      setModalOpen(false);
-      form.resetFields();
-      fetchPayments();
-    } else {
-      message.error(json.error || "Failed to record payment");
+    try {
+      const res = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...values,
+          dueDate: values.dueDate
+            ? (values.dueDate as dayjs.Dayjs).toISOString()
+            : undefined,
+          paidAt: values.paidAt
+            ? (values.paidAt as dayjs.Dayjs).toISOString()
+            : undefined,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        message.success("Payment recorded!");
+        setModalOpen(false);
+        form.resetFields();
+        fetchPayments();
+      } else {
+        message.error(json.error || "Failed to record payment");
+      }
+    } catch {
+      message.error("Network error");
     }
     setSubmitting(false);
   };

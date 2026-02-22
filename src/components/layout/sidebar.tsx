@@ -21,7 +21,6 @@ const navigation = [
   { name: "Finance", href: "/finance", icon: "💰" },
   { name: "Reports", href: "/reports", icon: "📈" },
   { name: "Audit Logs", href: "/admin/audit-logs", icon: "🔍" },
-  { name: "Settings", href: "/settings", icon: "⚙️" },
 ];
 
 export function Sidebar({ userContext }: SidebarProps) {

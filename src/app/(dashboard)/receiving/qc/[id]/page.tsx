@@ -11,6 +11,7 @@ import {
   Spin,
   Radio,
   App,
+  Popconfirm,
 } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
@@ -339,19 +340,30 @@ export default function QCInspectPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button
-          type="primary"
-          size="large"
-          icon={<CheckCircleOutlined />}
-          onClick={handleSubmit}
-          loading={submitting}
+        <Popconfirm
+          title={qcResult === "REJECTED" ? "Reject this receiving?" : "Submit QC inspection?"}
+          description={qcResult === "REJECTED"
+            ? "Rejected items will not enter inventory."
+            : "This will advance the receiving to warehouse receipt."
+          }
+          onConfirm={handleSubmit}
+          okText="Submit"
+          okButtonProps={{ danger: qcResult === "REJECTED" }}
           disabled={isSameUser}
-          danger={qcResult === "REJECTED"}
         >
-          {qcResult === "REJECTED"
-            ? "Submit Rejection"
-            : "Submit Inspection"}
-        </Button>
+          <Button
+            type="primary"
+            size="large"
+            icon={<CheckCircleOutlined />}
+            loading={submitting}
+            disabled={isSameUser}
+            danger={qcResult === "REJECTED"}
+          >
+            {qcResult === "REJECTED"
+              ? "Submit Rejection"
+              : "Submit Inspection"}
+          </Button>
+        </Popconfirm>
       </div>
     </div>
   );
