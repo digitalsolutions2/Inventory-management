@@ -6,9 +6,9 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isPositiveNumber,
   sanitizePagination,
 } from "@/lib/api-utils";
+import { CreatePOSchema, parseBody } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -72,11 +72,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { supplierId, expectedDate, notes, lines } = body;
+    const parsed = parseBody(CreatePOSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (!supplierId) return apiError("Supplier is required");
-    if (!lines || !Array.isArray(lines) || lines.length === 0)
-      return apiError("At least one line item is required");
+    const { supplierId, expectedDate, notes, lines } = parsed.data;
 
     // Validate supplier exists
     const supplier = await prisma.supplier.findFirst({
@@ -84,17 +83,8 @@ export async function POST(request: NextRequest) {
     });
     if (!supplier) return apiError("Supplier not found or inactive", 404);
 
-    // Validate line items
-    for (const line of lines) {
-      if (!line.itemId) return apiError("Each line must have an itemId");
-      if (!isPositiveNumber(line.quantity))
-        return apiError("Quantity must be a positive number");
-      if (!isPositiveNumber(line.unitCost))
-        return apiError("Unit cost must be a positive number");
-    }
-
     // Validate items exist
-    const itemIds = lines.map((l: { itemId: string }) => l.itemId);
+    const itemIds = lines.map((l) => l.itemId);
     const items = await prisma.item.findMany({
       where: { id: { in: itemIds }, tenantId: user.tenantId, isActive: true },
     });
@@ -109,8 +99,7 @@ export async function POST(request: NextRequest) {
     const poNumber = `PO-${String(count + 1).padStart(5, "0")}`;
 
     const totalAmount = lines.reduce(
-      (sum: number, line: { quantity: number; unitCost: number }) =>
-        sum + line.quantity * line.unitCost,
+      (sum, line) => sum + line.quantity * line.unitCost,
       0
     );
 
@@ -124,15 +113,13 @@ export async function POST(request: NextRequest) {
         totalAmount,
         createdById: user.id,
         lines: {
-          create: lines.map(
-            (line: { itemId: string; quantity: number; unitCost: number; notes?: string }) => ({
-              itemId: line.itemId,
-              quantity: line.quantity,
-              unitCost: line.unitCost,
-              totalCost: line.quantity * line.unitCost,
-              notes: line.notes,
-            })
-          ),
+          create: lines.map((line) => ({
+            itemId: line.itemId,
+            quantity: line.quantity,
+            unitCost: line.unitCost,
+            totalCost: line.quantity * line.unitCost,
+            notes: line.notes,
+          })),
         },
       },
       include: {

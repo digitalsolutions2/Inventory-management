@@ -6,9 +6,9 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isPositiveNumber,
   sanitizePagination,
 } from "@/lib/api-utils";
+import { CreatePaymentSchema, parseBody } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -75,6 +75,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const parsed = parseBody(CreatePaymentSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
+
     const {
       purchaseOrderId,
       amount,
@@ -83,11 +86,7 @@ export async function POST(request: NextRequest) {
       paymentMethod,
       referenceNumber,
       notes,
-    } = body;
-
-    if (!purchaseOrderId) return apiError("Purchase order is required");
-    if (!isPositiveNumber(amount))
-      return apiError("Amount must be a positive number");
+    } = parsed.data;
 
     const po = await prisma.purchaseOrder.findFirst({
       where: { id: purchaseOrderId, tenantId: user.tenantId },

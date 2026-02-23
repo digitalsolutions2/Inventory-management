@@ -148,6 +148,8 @@ model Item {
   transferLines    TransferLine[]
 
   @@unique([tenantId, code])
+  @@index([tenantId, categoryId])
+  @@index([tenantId, isActive])
   @@map("items")
 }
 
@@ -174,6 +176,8 @@ model Location {
   transfersTo        Transfer[] @relation("transfer_to")
 
   @@unique([tenantId, code])
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
   @@map("locations")
 }
 
@@ -238,6 +242,9 @@ model PurchaseOrder {
   payments   Payment[]
 
   @@unique([tenantId, poNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, supplierId])
+  @@index([tenantId, createdAt])
   @@map("purchase_orders")
 }
 
@@ -264,6 +271,8 @@ model PurchaseOrderLine {
   purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   item          Item          @relation(fields: [itemId], references: [id])
 
+  @@index([purchaseOrderId])
+  @@index([itemId])
   @@map("purchase_order_lines")
 }
 
@@ -309,6 +318,8 @@ model Receiving {
   lines ReceivingLine[]
 
   @@unique([tenantId, receivingNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, purchaseOrderId])
   @@map("receivings")
 }
 
@@ -364,6 +375,8 @@ model InventoryItem {
   location Location @relation(fields: [locationId], references: [id])
 
   @@unique([tenantId, itemId, locationId])
+  @@index([tenantId, itemId])
+  @@index([tenantId, locationId])
   @@map("inventory_items")
 }
 
@@ -424,6 +437,8 @@ model InternalRequest {
   lines InternalRequestLine[]
 
   @@unique([tenantId, requestNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
   @@map("internal_requests")
 }
 
@@ -484,6 +499,9 @@ model Transfer {
   lines TransferLine[]
 
   @@unique([tenantId, transferNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, fromLocationId])
+  @@index([tenantId, toLocationId])
   @@map("transfers")
 }
 
@@ -533,6 +551,9 @@ model Payment {
   purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
   recordedBy    User          @relation(fields: [recordedById], references: [id])
 
+  @@index([tenantId, status])
+  @@index([tenantId, purchaseOrderId])
+  @@index([tenantId, dueDate])
   @@map("payments")
 }
 

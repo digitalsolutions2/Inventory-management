@@ -6,8 +6,8 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isNonNegativeNumber,
 } from "@/lib/api-utils";
+import { QCInspectSchema, parseBody } from "@/lib/validations";
 
 export async function POST(
   request: NextRequest,
@@ -21,35 +21,10 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { qcResult, lines, notes } = body as {
-      qcResult: "ACCEPTED" | "PARTIAL" | "REJECTED";
-      lines: {
-        id: string;
-        acceptedQty: number;
-        rejectedQty: number;
-        notes?: string;
-      }[];
-      notes?: string;
-    };
+    const parsed = parseBody(QCInspectSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (
-      !qcResult ||
-      !["ACCEPTED", "PARTIAL", "REJECTED"].includes(qcResult)
-    ) {
-      return apiError(
-        "Valid QC result is required (ACCEPTED, PARTIAL, REJECTED)"
-      );
-    }
-    if (!lines || !Array.isArray(lines) || lines.length === 0)
-      return apiError("Line item inspection results are required");
-
-    // Validate quantity values are non-negative numbers
-    for (const line of lines) {
-      if (!isNonNegativeNumber(line.acceptedQty))
-        return apiError("Accepted quantity must be a non-negative number");
-      if (!isNonNegativeNumber(line.rejectedQty))
-        return apiError("Rejected quantity must be a non-negative number");
-    }
+    const { qcResult, lines, notes } = parsed.data;
 
     // Fetch the receiving record
     const receiving = await prisma.receiving.findFirst({

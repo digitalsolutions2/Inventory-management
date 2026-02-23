@@ -6,9 +6,9 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isPositiveNumber,
   sanitizePagination,
 } from "@/lib/api-utils";
+import { CreateReceivingSchema, parseBody } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -74,20 +74,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { purchaseOrderId, lines, notes } = body;
+    const parsed = parseBody(CreateReceivingSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (!purchaseOrderId) return apiError("Purchase order is required");
-    if (!lines || !Array.isArray(lines) || lines.length === 0)
-      return apiError("At least one line item is required");
-
-    // Validate line quantities
-    for (const line of lines) {
-      if (!line.itemId) return apiError("Each line must have an itemId");
-      if (!isPositiveNumber(line.receivedQty))
-        return apiError(
-          `Received quantity must be a positive number for item ${line.itemId}`
-        );
-    }
+    const { purchaseOrderId, lines, notes } = parsed.data;
 
     // Fetch the PO with lines
     const po = await prisma.purchaseOrder.findFirst({
@@ -145,23 +135,17 @@ export async function POST(request: NextRequest) {
         procVerifiedAt: new Date(),
         procNotes: notes,
         lines: {
-          create: lines.map(
-            (line: {
-              itemId: string;
-              receivedQty: number;
-              notes?: string;
-            }) => {
-              const poLine = poLineMap.get(line.itemId);
-              if (!poLine) throw new Error(`PO line not found for item ${line.itemId}`);
-              return {
-                itemId: line.itemId,
-                expectedQty: poLine.quantity,
-                receivedQty: line.receivedQty,
-                unitCost: poLine.unitCost,
-                notes: line.notes,
-              };
-            }
-          ),
+          create: lines.map((line) => {
+            const poLine = poLineMap.get(line.itemId);
+            if (!poLine) throw new Error(`PO line not found for item ${line.itemId}`);
+            return {
+              itemId: line.itemId,
+              expectedQty: poLine.quantity,
+              receivedQty: line.receivedQty,
+              unitCost: poLine.unitCost,
+              notes: line.notes,
+            };
+          }),
         },
       },
       include: {

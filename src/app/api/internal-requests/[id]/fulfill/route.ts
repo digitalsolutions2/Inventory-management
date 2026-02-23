@@ -6,8 +6,8 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isNonNegativeNumber,
 } from "@/lib/api-utils";
+import { FulfillRequestSchema, parseBody } from "@/lib/validations";
 
 export async function POST(
   request: NextRequest,
@@ -21,21 +21,10 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { lines, locationId, notes } = body as {
-      lines: { id: string; issuedQty: number; notes?: string }[];
-      locationId: string;
-      notes?: string;
-    };
+    const parsed = parseBody(FulfillRequestSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (!lines || !Array.isArray(lines) || lines.length === 0)
-      return apiError("Line item fulfillment data is required");
-    if (!locationId) return apiError("Source location is required");
-
-    // Validate quantities are non-negative numbers
-    for (const line of lines) {
-      if (!isNonNegativeNumber(line.issuedQty))
-        return apiError("Issued quantity must be a non-negative number");
-    }
+    const { lines, locationId, notes } = parsed.data;
 
     // Fetch the request
     const req = await prisma.internalRequest.findFirst({

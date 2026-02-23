@@ -7,12 +7,18 @@ import {
   apiError,
   sanitizePagination,
 } from "@/lib/api-utils";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
   if (!checkPermission(user, "audit:read"))
     return apiError("Forbidden", 403);
+
+  const rl = rateLimit(user.id, "reports");
+  if (!rl.allowed) {
+    return apiError(`Rate limit exceeded. Try again in ${rl.resetIn}s`, 429);
+  }
 
   const { searchParams } = request.nextUrl;
   const { page, pageSize } = sanitizePagination(

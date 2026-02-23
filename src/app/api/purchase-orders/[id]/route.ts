@@ -6,8 +6,8 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isPositiveNumber,
 } from "@/lib/api-utils";
+import { UpdatePOSchema, parseBody } from "@/lib/validations";
 
 export async function GET(
   _request: NextRequest,
@@ -55,20 +55,10 @@ export async function PUT(
     if (existing.status !== "DRAFT") return apiError("Only draft POs can be edited");
 
     const body = await request.json();
-    const { supplierId, expectedDate, notes, lines } = body;
+    const parsed = parseBody(UpdatePOSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    // Validate lines if provided
-    if (lines) {
-      if (!Array.isArray(lines) || lines.length === 0)
-        return apiError("At least one line item is required");
-      for (const line of lines) {
-        if (!line.itemId) return apiError("Each line must have an itemId");
-        if (!isPositiveNumber(line.quantity))
-          return apiError("Quantity must be a positive number");
-        if (!isPositiveNumber(line.unitCost))
-          return apiError("Unit cost must be a positive number");
-      }
-    }
+    const { supplierId, expectedDate, notes, lines } = parsed.data;
 
     // Validate supplier if changed
     if (supplierId) {
@@ -80,8 +70,7 @@ export async function PUT(
 
     const totalAmount = lines
       ? lines.reduce(
-          (sum: number, line: { quantity: number; unitCost: number }) =>
-            sum + line.quantity * line.unitCost,
+          (sum, line) => sum + line.quantity * line.unitCost,
           0
         )
       : undefined;
@@ -98,15 +87,13 @@ export async function PUT(
         ...(lines && {
           lines: {
             deleteMany: {},
-            create: lines.map(
-              (line: { itemId: string; quantity: number; unitCost: number; notes?: string }) => ({
-                itemId: line.itemId,
-                quantity: line.quantity,
-                unitCost: line.unitCost,
-                totalCost: line.quantity * line.unitCost,
-                notes: line.notes,
-              })
-            ),
+            create: lines.map((line) => ({
+              itemId: line.itemId,
+              quantity: line.quantity,
+              unitCost: line.unitCost,
+              totalCost: line.quantity * line.unitCost,
+              notes: line.notes,
+            })),
           },
         }),
       },

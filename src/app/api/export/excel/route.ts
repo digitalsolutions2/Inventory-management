@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, apiError } from "@/lib/api-utils";
+import { ExportExcelSchema, parseBody } from "@/lib/validations";
+import { rateLimit } from "@/lib/rate-limit";
 import ExcelJS from "exceljs";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
 
+  // Rate limit exports
+  const rl = rateLimit(user.id, "exports");
+  if (!rl.allowed) {
+    return apiError(`Rate limit exceeded. Try again in ${rl.resetIn}s`, 429);
+  }
+
   try {
     const body = await request.json();
-    const { title, columns, rows } = body as {
-      title: string;
-      columns: { header: string; key: string; width?: number }[];
-      rows: Record<string, unknown>[];
-    };
+    const parsed = parseBody(ExportExcelSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (!title || !columns || !Array.isArray(columns) || !rows || !Array.isArray(rows)) {
-      return apiError("title, columns, and rows are required");
-    }
+    const { title, columns, rows } = parsed.data;
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Supply Chain ERP";

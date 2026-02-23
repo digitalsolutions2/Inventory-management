@@ -1,52 +1,61 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, checkPermission, apiSuccess, apiError } from "@/lib/api-utils";
+import { getCurrentUser, checkPermission, apiSuccess, apiError, sanitizePagination } from "@/lib/api-utils";
+import { CreateSupplierSchema, parseBody } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
 
-  const { searchParams } = request.nextUrl;
-  const page = parseInt(searchParams.get("page") || "1");
-  const pageSize = parseInt(searchParams.get("pageSize") || "20");
-  const search = searchParams.get("search") || "";
-  const all = searchParams.get("all") === "true";
+  try {
+    const { searchParams } = request.nextUrl;
+    const all = searchParams.get("all") === "true";
+    const search = searchParams.get("search") || "";
 
-  const where = {
-    tenantId: user.tenantId,
-    ...(search && {
-      OR: [
-        { name: { contains: search, mode: "insensitive" as const } },
-        { code: { contains: search, mode: "insensitive" as const } },
-      ],
-    }),
-  };
+    const where = {
+      tenantId: user.tenantId,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { code: { contains: search, mode: "insensitive" as const } },
+        ],
+      }),
+    };
 
-  if (all) {
-    const suppliers = await prisma.supplier.findMany({
-      where: { ...where, isActive: true },
-      orderBy: { name: "asc" },
+    if (all) {
+      const suppliers = await prisma.supplier.findMany({
+        where: { ...where, isActive: true },
+        orderBy: { name: "asc" },
+      });
+      return apiSuccess(suppliers);
+    }
+
+    const { page, pageSize } = sanitizePagination(
+      searchParams.get("page"),
+      searchParams.get("pageSize")
+    );
+
+    const [suppliers, total] = await Promise.all([
+      prisma.supplier.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.supplier.count({ where }),
+    ]);
+
+    return apiSuccess({
+      data: suppliers,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
     });
-    return apiSuccess(suppliers);
+  } catch (e) {
+    console.error("GET /api/suppliers error:", e);
+    return apiError("Failed to fetch suppliers", 500);
   }
-
-  const [suppliers, total] = await Promise.all([
-    prisma.supplier.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.supplier.count({ where }),
-  ]);
-
-  return apiSuccess({
-    data: suppliers,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,12 +63,13 @@ export async function POST(request: NextRequest) {
   if (!user) return apiError("Unauthorized", 401);
   if (!checkPermission(user, "supplier:create")) return apiError("Forbidden", 403);
 
-  const body = await request.json();
-  const { code, name, contactName, email, phone, address, paymentTerms, rating } = body;
-
-  if (!code || !name) return apiError("Code and name are required");
-
   try {
+    const body = await request.json();
+    const parsed = parseBody(CreateSupplierSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
+
+    const { code, name, contactName, email, phone, address, paymentTerms, rating } = parsed.data;
+
     const supplier = await prisma.supplier.create({
       data: {
         tenantId: user.tenantId,
@@ -69,7 +79,7 @@ export async function POST(request: NextRequest) {
         email,
         phone,
         address,
-        paymentTerms: paymentTerms || 30,
+        paymentTerms,
         rating: rating || 0,
       },
     });
@@ -78,6 +88,7 @@ export async function POST(request: NextRequest) {
     if (e && typeof e === "object" && "code" in e && e.code === "P2002") {
       return apiError("Supplier code already exists");
     }
-    throw e;
+    console.error("POST /api/suppliers error:", e);
+    return apiError("Failed to create supplier", 500);
   }
 }

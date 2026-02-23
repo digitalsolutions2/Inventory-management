@@ -7,6 +7,7 @@ import {
   apiError,
   createAuditLog,
 } from "@/lib/api-utils";
+import { WarehouseReceiveSchema, parseBody } from "@/lib/validations";
 
 export async function POST(
   request: NextRequest,
@@ -20,9 +21,10 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { locationId, batchNumber, notes } = body;
+    const parsed = parseBody(WarehouseReceiveSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (!locationId) return apiError("Location is required");
+    const { locationId, batchNumber, notes } = parsed.data;
 
     // Fetch the receiving record with lines
     const receiving = await prisma.receiving.findFirst({
@@ -60,9 +62,9 @@ export async function POST(
       return apiError("Location not found or inactive", 404);
 
     // Perform all updates in a transaction
-    const updated = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       // 1. Update receiving header
-      const updatedReceiving = await tx.receiving.update({
+      await tx.receiving.update({
         where: { id },
         data: {
           status: "RECEIVED",
@@ -172,8 +174,6 @@ export async function POST(
           data: { status: "PARTIALLY_RECEIVED" },
         });
       }
-
-      return updatedReceiving;
     });
 
     // Fetch the full updated record for response

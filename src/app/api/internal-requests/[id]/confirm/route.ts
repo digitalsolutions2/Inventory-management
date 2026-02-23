@@ -6,8 +6,8 @@ import {
   apiSuccess,
   apiError,
   createAuditLog,
-  isNonNegativeNumber,
 } from "@/lib/api-utils";
+import { ConfirmRequestSchema, parseBody } from "@/lib/validations";
 
 export async function POST(
   request: NextRequest,
@@ -21,26 +21,10 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { lines, notes, hasDiscrepancy } = body as {
-      lines: {
-        id: string;
-        confirmedQty: number;
-        notes?: string;
-      }[];
-      notes?: string;
-      hasDiscrepancy?: boolean;
-    };
+    const parsed = parseBody(ConfirmRequestSchema, body);
+    if (!parsed.success) return apiError(parsed.error);
 
-    if (!lines || !Array.isArray(lines) || lines.length === 0)
-      return apiError("Line item confirmation data is required");
-
-    // Validate quantities
-    for (const line of lines) {
-      if (!isNonNegativeNumber(line.confirmedQty))
-        return apiError(
-          "Confirmed quantity must be a non-negative number"
-        );
-    }
+    const { lines, notes, hasDiscrepancy } = parsed.data;
 
     const req = await prisma.internalRequest.findFirst({
       where: { id, tenantId: user.tenantId },
