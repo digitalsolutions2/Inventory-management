@@ -18,7 +18,6 @@ import { useRouter, useParams } from "next/navigation";
 import { useUserStore } from "@/store/user";
 import { ReceivingSteps } from "@/components/receiving/receiving-steps";
 import type { ColumnsType } from "antd/es/table";
-import dayjs from "dayjs";
 
 interface ReceivingLine {
   id: string;

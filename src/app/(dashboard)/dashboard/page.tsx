@@ -42,8 +42,6 @@ import {
   Pie,
   Cell,
   Legend,
-  LineChart,
-  Line,
 } from "recharts";
 import Link from "next/link";
 import dayjs from "dayjs";

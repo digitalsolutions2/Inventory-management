@@ -20,7 +20,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from "recharts";
 import { exportToExcel } from "@/lib/export-excel";
 import type { ColumnsType } from "antd/es/table";
@@ -42,8 +41,8 @@ const PIE_COLORS = ["#1890ff", "#52c41a", "#faad14", "#ff4d4f", "#722ed1", "#13c
 export default function InventoryValuationReport() {
   const { message } = App.useApp();
   const [rows, setRows] = useState<Row[]>([]);
-  const [totalValue, setTotalValue] = useState(0);
-  const [totalQty, setTotalQty] = useState(0);
+  const [_totalValue, setTotalValue] = useState(0);
+  const [_totalQty, setTotalQty] = useState(0);
   const [loading, setLoading] = useState(true);
   const [locationFilter, setLocationFilter] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
@@ -106,7 +105,7 @@ export default function InventoryValuationReport() {
   ).sort((a, b) => b.value - a.value);
 
   const filteredTotalValue = filtered.reduce((s, r) => s + r.totalValue, 0);
-  const filteredTotalQty = filtered.reduce((s, r) => s + r.quantity, 0);
+  const _filteredTotalQty = filtered.reduce((s, r) => s + r.quantity, 0);
 
   const columns: ColumnsType<Row> = [
     { title: "Code", dataIndex: "itemCode", width: 100 },

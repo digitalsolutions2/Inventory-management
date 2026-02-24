@@ -68,7 +68,7 @@ export default function StoreOrderPage() {
   const [warehouseLocationId, setWarehouseLocationId] = useState<string>("");
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchLocations = useCallback(async () => {

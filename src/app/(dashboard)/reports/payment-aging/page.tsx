@@ -14,7 +14,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   BarChart,
   Bar,
   XAxis,
@@ -66,7 +65,7 @@ export default function PaymentAgingReport() {
   const { message } = App.useApp();
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bucketFilter, setBucketFilter] = useState<string>("");
+  const [bucketFilter, _setBucketFilter] = useState<string>("");
 
   const fetch_ = useCallback(async () => {
     setLoading(true);
