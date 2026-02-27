@@ -162,6 +162,7 @@ export default function PODetailPage() {
   };
 
   const handleApprove = async () => {
+    const isWarehouseStep = po?.status === "PENDING_WAREHOUSE_APPROVAL";
     setActionLoading(true);
     try {
       const res = await fetch(`/api/purchase-orders/${id}/approve`, {
@@ -172,7 +173,11 @@ export default function PODetailPage() {
       const json = await res.json();
       if (json.success) {
         message.success(t.procurement.poApproved);
-        fetchPO();
+        if (isWarehouseStep) {
+          router.push(`/procurement/${id}/receive`);
+        } else {
+          fetchPO();
+        }
       } else {
         message.error(json.error || t.procurement.failedToApprove);
       }
@@ -304,7 +309,7 @@ export default function PODetailPage() {
             items={[
               {
                 title: t.procurement.approval.qcApproval,
-                description: po.qcApprovedBy
+                content: po.qcApprovedBy
                   ? `${po.qcApprovedBy.fullName} - ${dayjs(po.qcApprovedAt).format("DD MMM HH:mm")}`
                   : po.status === "PENDING_QC_APPROVAL"
                     ? undefined
@@ -319,7 +324,7 @@ export default function PODetailPage() {
               },
               {
                 title: t.procurement.approval.financeApproval,
-                description: po.financeApprovedBy
+                content: po.financeApprovedBy
                   ? `${po.financeApprovedBy.fullName} - ${dayjs(po.financeApprovedAt).format("DD MMM HH:mm")}`
                   : undefined,
                 icon: po.financeApprovedBy ? (
@@ -332,7 +337,7 @@ export default function PODetailPage() {
               },
               {
                 title: t.procurement.approval.warehouseApproval,
-                description: po.warehouseApprovedBy
+                content: po.warehouseApprovedBy
                   ? `${po.warehouseApprovedBy.fullName} - ${dayjs(po.warehouseApprovedAt).format("DD MMM HH:mm")}`
                   : undefined,
                 icon: po.warehouseApprovedBy ? (
@@ -354,7 +359,7 @@ export default function PODetailPage() {
           type="error"
           className="mb-4"
           showIcon
-          message={
+          title={
             <span>
               {t.procurement.approval.rejectedBy}: <strong>{po.rejectedBy.fullName}</strong>
               {po.rejectedAt && ` - ${dayjs(po.rejectedAt).format("DD MMM YYYY HH:mm")}`}
@@ -406,7 +411,7 @@ export default function PODetailPage() {
         </Card>
 
         <Card title={t.procurement.details.actions}>
-          <Space direction="vertical" className="w-full">
+          <Space orientation="vertical" className="w-full">
             {po.status === "DRAFT" && hasPermission("po:write") && (
               <>
                 <Button

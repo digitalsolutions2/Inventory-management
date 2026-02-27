@@ -340,6 +340,14 @@ export interface Dictionary {
       alreadyConverted: string;
     };
     optionalNotes: string;
+    receive: {
+      title: string;
+      selectLocation: string;
+      confirmReceive: string;
+      success: string;
+      failed: string;
+      locationRequired: string;
+    };
   };
   receiving: {
     title: string;

@@ -8,7 +8,7 @@ const uuid = z.string().uuid();
 const positiveFloat = z.number().positive().finite();
 const nonNegativeFloat = z.number().min(0).finite();
 const trimmedString = z.string().trim().min(1).max(500);
-const optionalString = z.string().trim().max(2000).optional().or(z.literal(""));
+const optionalString = z.string().trim().max(2000).optional().nullable().or(z.literal(""));
 
 // ============================================================
 // MASTER DATA
@@ -74,7 +74,7 @@ const POLineSchema = z.object({
 
 export const CreatePOSchema = z.object({
   supplierId: uuid,
-  expectedDate: z.string().datetime().optional().nullable(),
+  expectedDate: z.string().optional().nullable(),
   notes: optionalString,
   lines: z.array(POLineSchema).min(1, "At least one line item is required"),
   internalRequestId: uuid.optional().nullable(),
@@ -82,7 +82,7 @@ export const CreatePOSchema = z.object({
 
 export const UpdatePOSchema = z.object({
   supplierId: uuid.optional(),
-  expectedDate: z.string().datetime().optional().nullable(),
+  expectedDate: z.string().optional().nullable(),
   notes: optionalString,
   lines: z.array(POLineSchema).min(1).optional(),
 });
@@ -124,6 +124,11 @@ export const QCInspectSchema = z.object({
 export const WarehouseReceiveSchema = z.object({
   locationId: uuid,
   batchNumber: z.string().trim().max(100).optional(),
+  notes: optionalString,
+});
+
+export const POReceiveSchema = z.object({
+  locationId: uuid,
   notes: optionalString,
 });
 
@@ -206,8 +211,8 @@ export const TransferReceiveSchema = z.object({
 export const CreatePaymentSchema = z.object({
   purchaseOrderId: uuid,
   amount: positiveFloat,
-  dueDate: z.string().datetime().optional().nullable(),
-  paidAt: z.string().datetime().optional().nullable(),
+  dueDate: z.string().optional().nullable(),
+  paidAt: z.string().optional().nullable(),
   paymentMethod: z.string().trim().max(50).optional(),
   referenceNumber: z.string().trim().max(100).optional(),
   notes: optionalString,

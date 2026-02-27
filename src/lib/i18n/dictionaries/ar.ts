@@ -341,6 +341,14 @@ export const ar: Dictionary = {
       alreadyConverted: "يوجد أمر شراء مرتبط بهذا الطلب بالفعل",
     },
     optionalNotes: "ملاحظات اختيارية",
+    receive: {
+      title: "استلام أمر الشراء إلى المخزون",
+      selectLocation: "اختر موقع التخزين",
+      confirmReceive: "تأكيد واستلام",
+      success: "تم استلام أمر الشراء إلى المخزون بنجاح",
+      failed: "فشل استلام أمر الشراء إلى المخزون",
+      locationRequired: "الرجاء اختيار موقع التخزين",
+    },
   },
   receiving: {
     title: "الاستلام",

@@ -341,6 +341,14 @@ export const en: Dictionary = {
       alreadyConverted: "A PO already exists for this request",
     },
     optionalNotes: "Optional notes",
+    receive: {
+      title: "Receive PO into Inventory",
+      selectLocation: "Select Storage Location",
+      confirmReceive: "Confirm & Receive",
+      success: "PO received into inventory successfully",
+      failed: "Failed to receive PO into inventory",
+      locationRequired: "Please select a storage location",
+    },
   },
   receiving: {
     title: "Receiving",
