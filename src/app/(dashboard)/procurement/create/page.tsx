@@ -13,7 +13,7 @@ import {
   Card,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
@@ -44,6 +44,8 @@ let lineKeyCounter = 0;
 export default function CreatePOPage() {
   const { message } = App.useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestId = searchParams.get("requestId");
   const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -52,6 +54,7 @@ export default function CreatePOPage() {
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<LineItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [internalRequestId, setInternalRequestId] = useState<string | null>(requestId);
 
   const fetchData = useCallback(async () => {
     const [supRes, itemRes] = await Promise.all([
@@ -61,8 +64,32 @@ export default function CreatePOPage() {
     const supJson = await supRes.json();
     const itemJson = await itemRes.json();
     if (supJson.success) setSuppliers(supJson.data);
-    if (itemJson.success) setItems(itemJson.data.data);
-  }, []);
+    if (itemJson.success) {
+      setItems(itemJson.data.data);
+      // Auto-fill from internal request if requestId provided
+      if (requestId) {
+        const reqRes = await fetch(`/api/internal-requests/${requestId}`);
+        const reqJson = await reqRes.json();
+        if (reqJson.success) {
+          const req = reqJson.data;
+          setNotes(`Created from request ${req.requestNumber}`);
+          setInternalRequestId(requestId);
+          const allItems = itemJson.data.data as Item[];
+          const autoLines: LineItem[] = (req.lines || []).map((line: { itemId: string; requestedQty: number; notes?: string }) => {
+            const item = allItems.find((i: Item) => i.id === line.itemId);
+            return {
+              key: `line-${++lineKeyCounter}`,
+              itemId: line.itemId,
+              quantity: line.requestedQty,
+              unitCost: item?.avgCost || 0,
+              notes: line.notes,
+            };
+          });
+          setLines(autoLines);
+        }
+      }
+    }
+  }, [requestId]);
 
   useEffect(() => {
     fetchData();
@@ -128,6 +155,7 @@ export default function CreatePOPage() {
             unitCost: l.unitCost,
             notes: l.notes,
           })),
+          ...(internalRequestId && { internalRequestId }),
         }),
       });
       const json = await res.json();

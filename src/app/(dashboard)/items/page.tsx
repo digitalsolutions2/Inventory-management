@@ -143,7 +143,7 @@ export default function ItemsPage() {
       width: 100,
       render: (_, record) => (
         <Space size="small">
-          {hasPermission("item:edit") && (
+          {hasPermission("items:write") && (
             <Button
               type="text"
               size="small"
@@ -154,7 +154,7 @@ export default function ItemsPage() {
               }}
             />
           )}
-          {hasPermission("item:delete") && (
+          {hasPermission("items:delete") && (
             <Popconfirm
               title={t.items.deactivateConfirm}
               onConfirm={() => handleDelete(record.id)}
@@ -171,7 +171,7 @@ export default function ItemsPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">{t.items.title}</h1>
-        {hasPermission("item:create") && (
+        {hasPermission("items:write") && (
           <Button
             type="primary"
             icon={<PlusOutlined />}

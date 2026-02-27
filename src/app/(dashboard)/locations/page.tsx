@@ -105,7 +105,7 @@ export default function LocationsPage() {
       width: 100,
       render: (_, record) => (
         <Space size="small">
-          {hasPermission("location:edit") && (
+          {hasPermission("locations:write") && (
             <Button
               type="text"
               size="small"
@@ -116,7 +116,7 @@ export default function LocationsPage() {
               }}
             />
           )}
-          {hasPermission("location:delete") && (
+          {hasPermission("locations:delete") && (
             <Popconfirm
               title={t.locations.deactivateConfirm}
               onConfirm={() => handleDelete(record.id)}
@@ -133,7 +133,7 @@ export default function LocationsPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">{t.locations.title}</h1>
-        {hasPermission("location:create") && (
+        {hasPermission("locations:write") && (
           <Button
             type="primary"
             icon={<PlusOutlined />}

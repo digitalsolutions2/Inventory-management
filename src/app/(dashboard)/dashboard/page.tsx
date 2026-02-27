@@ -108,7 +108,9 @@ interface DashboardData {
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#d9d9d9",
-  PENDING_APPROVAL: "#faad14",
+  PENDING_QC_APPROVAL: "#faad14",
+  PENDING_FINANCE_APPROVAL: "#d4b106",
+  PENDING_WAREHOUSE_APPROVAL: "#a0d911",
   APPROVED: "#52c41a",
   SENT: "#1890ff",
   PARTIALLY_RECEIVED: "#722ed1",

@@ -48,7 +48,9 @@ const PIE_COLORS = ["#1890ff", "#52c41a", "#faad14", "#ff4d4f", "#722ed1", "#13c
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#d9d9d9",
-  PENDING_APPROVAL: "#faad14",
+  PENDING_QC_APPROVAL: "#faad14",
+  PENDING_FINANCE_APPROVAL: "#d4b106",
+  PENDING_WAREHOUSE_APPROVAL: "#a0d911",
   APPROVED: "#52c41a",
   SENT: "#1890ff",
   PARTIALLY_RECEIVED: "#722ed1",
@@ -65,7 +67,9 @@ export default function PurchaseSummaryReport() {
 
   const STATUS_LABELS: Record<string, string> = {
     DRAFT: t.procurement.statusLabels.DRAFT,
-    PENDING_APPROVAL: t.procurement.statusLabels.PENDING_APPROVAL,
+    PENDING_QC_APPROVAL: t.procurement.statusLabels.PENDING_QC_APPROVAL,
+    PENDING_FINANCE_APPROVAL: t.procurement.statusLabels.PENDING_FINANCE_APPROVAL,
+    PENDING_WAREHOUSE_APPROVAL: t.procurement.statusLabels.PENDING_WAREHOUSE_APPROVAL,
     APPROVED: t.procurement.statusLabels.APPROVED,
     SENT: t.procurement.statusLabels.SENT,
     PARTIALLY_RECEIVED: t.procurement.statusLabels.PARTIALLY_RECEIVED,

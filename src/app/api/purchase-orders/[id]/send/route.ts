@@ -14,7 +14,7 @@ export async function POST(
 ) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
-  if (!checkPermission(user, "po:edit")) return apiError("Forbidden", 403);
+  if (!checkPermission(user, "po:write")) return apiError("Forbidden", 403);
 
   try {
     const { id } = await params;

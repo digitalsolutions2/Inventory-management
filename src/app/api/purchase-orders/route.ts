@@ -68,14 +68,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
-  if (!checkPermission(user, "po:create")) return apiError("Forbidden", 403);
+  if (!checkPermission(user, "po:write")) return apiError("Forbidden", 403);
 
   try {
     const body = await request.json();
     const parsed = parseBody(CreatePOSchema, body);
     if (!parsed.success) return apiError(parsed.error);
 
-    const { supplierId, expectedDate, notes, lines } = parsed.data;
+    const { supplierId, expectedDate, notes, lines, internalRequestId } = parsed.data;
 
     // Validate supplier exists
     const supplier = await prisma.supplier.findFirst({
@@ -90,6 +90,14 @@ export async function POST(request: NextRequest) {
     });
     if (items.length !== itemIds.length) {
       return apiError("One or more items not found or inactive");
+    }
+
+    // Validate internal request if provided
+    if (internalRequestId) {
+      const request = await prisma.internalRequest.findFirst({
+        where: { id: internalRequestId, tenantId: user.tenantId },
+      });
+      if (!request) return apiError("Internal request not found", 404);
     }
 
     // Generate PO number
@@ -112,6 +120,7 @@ export async function POST(request: NextRequest) {
         notes,
         totalAmount,
         createdById: user.id,
+        ...(internalRequestId && { internalRequestId }),
         lines: {
           create: lines.map((line) => ({
             itemId: line.itemId,

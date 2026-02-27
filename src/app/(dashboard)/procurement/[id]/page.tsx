@@ -14,8 +14,16 @@ import {
   Spin,
   App,
   Card,
+  Steps,
+  Alert,
 } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  LinkOutlined,
+} from "@ant-design/icons";
 import { useUserStore } from "@/store/user";
 import { useTranslation } from "@/lib/i18n";
 import dayjs from "dayjs";
@@ -53,18 +61,46 @@ interface PurchaseOrder {
   createdBy: { id: string; fullName: string; email: string };
   approvedBy?: { id: string; fullName: string; email: string } | null;
   approvedAt?: string | null;
+  qcApprovedBy?: { id: string; fullName: string } | null;
+  qcApprovedAt?: string | null;
+  financeApprovedBy?: { id: string; fullName: string } | null;
+  financeApprovedAt?: string | null;
+  warehouseApprovedBy?: { id: string; fullName: string } | null;
+  warehouseApprovedAt?: string | null;
+  rejectedBy?: { id: string; fullName: string } | null;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
+  internalRequest?: { id: string; requestNumber: string; status: string } | null;
   lines: POLine[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "default",
-  PENDING_APPROVAL: "orange",
+  PENDING_QC_APPROVAL: "orange",
+  PENDING_FINANCE_APPROVAL: "gold",
+  PENDING_WAREHOUSE_APPROVAL: "lime",
   APPROVED: "green",
   SENT: "blue",
   PARTIALLY_RECEIVED: "cyan",
   RECEIVED: "geekblue",
   CANCELLED: "red",
 };
+
+function getApprovalStepIndex(status: string): number {
+  switch (status) {
+    case "DRAFT": return -1;
+    case "PENDING_QC_APPROVAL": return 0;
+    case "PENDING_FINANCE_APPROVAL": return 1;
+    case "PENDING_WAREHOUSE_APPROVAL": return 2;
+    case "APPROVED":
+    case "SENT":
+    case "PARTIALLY_RECEIVED":
+    case "RECEIVED":
+      return 3;
+    case "CANCELLED": return -2;
+    default: return -1;
+  }
+}
 
 export default function PODetailPage() {
   const { message } = App.useApp();
@@ -76,7 +112,9 @@ export default function PODetailPage() {
 
   const STATUS_LABELS: Record<string, string> = {
     DRAFT: t.procurement.statusLabels.DRAFT,
-    PENDING_APPROVAL: t.procurement.statusLabels.PENDING_APPROVAL,
+    PENDING_QC_APPROVAL: t.procurement.statusLabels.PENDING_QC_APPROVAL,
+    PENDING_FINANCE_APPROVAL: t.procurement.statusLabels.PENDING_FINANCE_APPROVAL,
+    PENDING_WAREHOUSE_APPROVAL: t.procurement.statusLabels.PENDING_WAREHOUSE_APPROVAL,
     APPROVED: t.procurement.statusLabels.APPROVED,
     SENT: t.procurement.statusLabels.SENT,
     PARTIALLY_RECEIVED: t.procurement.statusLabels.PARTIALLY_RECEIVED,
@@ -198,10 +236,26 @@ export default function PODetailPage() {
     return <div className="text-center text-gray-500 mt-12">{t.procurement.notFound}</div>;
   }
 
-  const canApprove =
-    po.status === "PENDING_APPROVAL" &&
-    hasPermission("po:approve") &&
+  const stepIndex = getApprovalStepIndex(po.status);
+  const isCancelled = po.status === "CANCELLED";
+
+  // Determine which approval button to show
+  const canApproveQC =
+    po.status === "PENDING_QC_APPROVAL" &&
+    hasPermission("po:approve_qc") &&
     user?.id !== po.createdBy.id;
+
+  const canApproveFinance =
+    po.status === "PENDING_FINANCE_APPROVAL" &&
+    hasPermission("po:approve_finance") &&
+    user?.id !== po.createdBy.id;
+
+  const canApproveWarehouse =
+    po.status === "PENDING_WAREHOUSE_APPROVAL" &&
+    hasPermission("po:approve_warehouse") &&
+    user?.id !== po.createdBy.id;
+
+  const canApprove = canApproveQC || canApproveFinance || canApproveWarehouse;
 
   const lineColumns: ColumnsType<POLine> = [
     { title: t.procurement.columns.itemCode, dataIndex: ["item", "code"], width: 120 },
@@ -240,6 +294,82 @@ export default function PODetailPage() {
         </Tag>
       </div>
 
+      {/* 3-Step Approval Progress */}
+      {po.status !== "DRAFT" && (
+        <Card className="mb-4" title={t.procurement.approval.stepsTitle} size="small">
+          <Steps
+            current={isCancelled ? -1 : stepIndex}
+            status={isCancelled ? "error" : stepIndex >= 3 ? "finish" : "process"}
+            size="small"
+            items={[
+              {
+                title: t.procurement.approval.qcApproval,
+                description: po.qcApprovedBy
+                  ? `${po.qcApprovedBy.fullName} - ${dayjs(po.qcApprovedAt).format("DD MMM HH:mm")}`
+                  : po.status === "PENDING_QC_APPROVAL"
+                    ? undefined
+                    : undefined,
+                icon: po.qcApprovedBy ? (
+                  <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                ) : isCancelled && stepIndex === -2 && !po.financeApprovedBy && !po.warehouseApprovedBy && !po.qcApprovedBy ? (
+                  <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                ) : po.status === "PENDING_QC_APPROVAL" ? (
+                  <ClockCircleOutlined style={{ color: "#faad14" }} />
+                ) : undefined,
+              },
+              {
+                title: t.procurement.approval.financeApproval,
+                description: po.financeApprovedBy
+                  ? `${po.financeApprovedBy.fullName} - ${dayjs(po.financeApprovedAt).format("DD MMM HH:mm")}`
+                  : undefined,
+                icon: po.financeApprovedBy ? (
+                  <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                ) : isCancelled && po.qcApprovedBy && !po.financeApprovedBy ? (
+                  <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                ) : po.status === "PENDING_FINANCE_APPROVAL" ? (
+                  <ClockCircleOutlined style={{ color: "#faad14" }} />
+                ) : undefined,
+              },
+              {
+                title: t.procurement.approval.warehouseApproval,
+                description: po.warehouseApprovedBy
+                  ? `${po.warehouseApprovedBy.fullName} - ${dayjs(po.warehouseApprovedAt).format("DD MMM HH:mm")}`
+                  : undefined,
+                icon: po.warehouseApprovedBy ? (
+                  <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                ) : isCancelled && po.financeApprovedBy && !po.warehouseApprovedBy ? (
+                  <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                ) : po.status === "PENDING_WAREHOUSE_APPROVAL" ? (
+                  <ClockCircleOutlined style={{ color: "#faad14" }} />
+                ) : undefined,
+              },
+            ]}
+          />
+        </Card>
+      )}
+
+      {/* Rejection Info */}
+      {isCancelled && po.rejectedBy && (
+        <Alert
+          type="error"
+          className="mb-4"
+          showIcon
+          message={
+            <span>
+              {t.procurement.approval.rejectedBy}: <strong>{po.rejectedBy.fullName}</strong>
+              {po.rejectedAt && ` - ${dayjs(po.rejectedAt).format("DD MMM YYYY HH:mm")}`}
+            </span>
+          }
+          description={
+            po.rejectionReason && (
+              <span>
+                {t.procurement.approval.rejectionReason}: {po.rejectionReason}
+              </span>
+            )
+          }
+        />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <Card className="lg:col-span-2">
           <Descriptions column={2} size="small">
@@ -260,10 +390,11 @@ export default function PODetailPage() {
                 ? dayjs(po.expectedDate).format("DD MMM YYYY")
                 : "-"}
             </Descriptions.Item>
-            {po.approvedBy && (
-              <Descriptions.Item label={t.procurement.details.approvedBy}>
-                {po.approvedBy.fullName} {t.common.on}{" "}
-                {po.approvedAt ? dayjs(po.approvedAt).format("DD MMM YYYY HH:mm") : ""}
+            {po.internalRequest && (
+              <Descriptions.Item label={t.procurement.approval.linkedRequest}>
+                <a onClick={() => router.push(`/requests`)}>
+                  <LinkOutlined /> {po.internalRequest.requestNumber}
+                </a>
               </Descriptions.Item>
             )}
             {po.notes && (
@@ -276,7 +407,7 @@ export default function PODetailPage() {
 
         <Card title={t.procurement.details.actions}>
           <Space direction="vertical" className="w-full">
-            {po.status === "DRAFT" && hasPermission("po:create") && (
+            {po.status === "DRAFT" && hasPermission("po:write") && (
               <>
                 <Button
                   block
@@ -312,7 +443,7 @@ export default function PODetailPage() {
                 </Button>
               </>
             )}
-            {po.status === "APPROVED" && hasPermission("po:edit") && (
+            {po.status === "APPROVED" && hasPermission("po:write") && (
               <Button block type="primary" onClick={handleMarkSent} loading={actionLoading}>
                 {t.procurement.markAsSent}
               </Button>

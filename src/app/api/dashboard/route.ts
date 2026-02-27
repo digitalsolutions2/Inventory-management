@@ -38,7 +38,12 @@ export async function GET() {
         select: { quantity: true, avgCost: true },
       }),
       prisma.purchaseOrder.count({
-        where: { tenantId, status: "PENDING_APPROVAL" },
+        where: {
+          tenantId,
+          status: {
+            in: ["PENDING_QC_APPROVAL", "PENDING_FINANCE_APPROVAL", "PENDING_WAREHOUSE_APPROVAL"],
+          },
+        },
       }),
       prisma.transfer.count({
         where: { tenantId, status: "PENDING" },

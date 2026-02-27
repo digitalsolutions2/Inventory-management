@@ -122,7 +122,7 @@ export default function SuppliersPage() {
       width: 100,
       render: (_, record) => (
         <Space size="small">
-          {hasPermission("supplier:edit") && (
+          {hasPermission("suppliers:write") && (
             <Button
               type="text"
               size="small"
@@ -133,7 +133,7 @@ export default function SuppliersPage() {
               }}
             />
           )}
-          {hasPermission("supplier:delete") && (
+          {hasPermission("suppliers:delete") && (
             <Popconfirm
               title={t.suppliers.deactivateConfirm}
               onConfirm={() => handleDelete(record.id)}
@@ -150,7 +150,7 @@ export default function SuppliersPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">{t.suppliers.title}</h1>
-        {hasPermission("supplier:create") && (
+        {hasPermission("suppliers:write") && (
           <Button
             type="primary"
             icon={<PlusOutlined />}

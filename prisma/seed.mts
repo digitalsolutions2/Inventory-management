@@ -38,7 +38,7 @@ const ROLES = [
       "items:read", "items:write", "items:delete",
       "locations:read", "locations:write", "locations:delete",
       "suppliers:read", "suppliers:write", "suppliers:delete",
-      "po:read", "po:write", "po:approve", "po:delete",
+      "po:read", "po:write", "po:approve", "po:approve_qc", "po:approve_finance", "po:approve_warehouse", "po:delete",
       "receiving:read", "receiving:proc_verify", "receiving:qc_inspect", "receiving:warehouse_receive",
       "inventory:read", "inventory:write", "inventory:adjust",
       "requests:read", "requests:write", "requests:fulfill", "requests:confirm",
@@ -64,7 +64,8 @@ const ROLES = [
     name: "qc_inspector",
     description: "Quality control inspections",
     permissions: [
-      "items:read", "receiving:read", "receiving:qc_inspect",
+      "items:read", "po:read", "po:approve_qc",
+      "receiving:read", "receiving:qc_inspect",
       "reports:read",
     ],
   },
@@ -73,6 +74,7 @@ const ROLES = [
     description: "Warehouse operations",
     permissions: [
       "items:read", "locations:read", "locations:write",
+      "po:read", "po:approve_warehouse",
       "inventory:read", "inventory:write", "inventory:adjust",
       "receiving:read", "receiving:warehouse_receive",
       "requests:read", "requests:fulfill",
@@ -95,7 +97,7 @@ const ROLES = [
     description: "Financial operations and reporting",
     permissions: [
       "items:read", "suppliers:read",
-      "po:read", "po:approve",
+      "po:read", "po:approve", "po:approve_finance",
       "payments:read", "payments:write",
       "reports:read", "reports:export",
     ],

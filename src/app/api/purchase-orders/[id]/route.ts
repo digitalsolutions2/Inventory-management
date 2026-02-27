@@ -24,6 +24,11 @@ export async function GET(
         supplier: true,
         createdBy: { select: { id: true, fullName: true, email: true } },
         approvedBy: { select: { id: true, fullName: true, email: true } },
+        qcApprovedBy: { select: { id: true, fullName: true, email: true } },
+        financeApprovedBy: { select: { id: true, fullName: true, email: true } },
+        warehouseApprovedBy: { select: { id: true, fullName: true, email: true } },
+        rejectedBy: { select: { id: true, fullName: true, email: true } },
+        internalRequest: { select: { id: true, requestNumber: true, status: true } },
         lines: {
           include: { item: { select: { id: true, code: true, name: true, uom: true } } },
         },
@@ -44,7 +49,7 @@ export async function PUT(
 ) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
-  if (!checkPermission(user, "po:edit")) return apiError("Forbidden", 403);
+  if (!checkPermission(user, "po:write")) return apiError("Forbidden", 403);
 
   try {
     const { id } = await params;

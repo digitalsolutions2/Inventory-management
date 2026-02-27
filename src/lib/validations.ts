@@ -77,6 +77,7 @@ export const CreatePOSchema = z.object({
   expectedDate: z.string().datetime().optional().nullable(),
   notes: optionalString,
   lines: z.array(POLineSchema).min(1, "At least one line item is required"),
+  internalRequestId: uuid.optional().nullable(),
 });
 
 export const UpdatePOSchema = z.object({

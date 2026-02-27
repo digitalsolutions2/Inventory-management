@@ -14,7 +14,7 @@ export async function POST(
 ) {
   const user = await getCurrentUser();
   if (!user) return apiError("Unauthorized", 401);
-  if (!checkPermission(user, "po:create")) return apiError("Forbidden", 403);
+  if (!checkPermission(user, "po:write")) return apiError("Forbidden", 403);
 
   try {
     const { id } = await params;
@@ -29,7 +29,7 @@ export async function POST(
 
     const updated = await prisma.purchaseOrder.update({
       where: { id },
-      data: { status: "PENDING_APPROVAL" },
+      data: { status: "PENDING_QC_APPROVAL" },
       include: {
         supplier: { select: { id: true, name: true, code: true } },
         createdBy: { select: { id: true, fullName: true } },
@@ -43,7 +43,7 @@ export async function POST(
       entityType: "PurchaseOrder",
       entityId: id,
       beforeData: { status: "DRAFT" },
-      afterData: { status: "PENDING_APPROVAL" },
+      afterData: { status: "PENDING_QC_APPROVAL" },
     });
 
     return apiSuccess(updated);

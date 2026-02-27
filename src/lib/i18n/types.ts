@@ -150,7 +150,9 @@ export interface Dictionary {
     totalValue: string;
     statusLabels: {
       DRAFT: string;
-      PENDING_APPROVAL: string;
+      PENDING_QC_APPROVAL: string;
+      PENDING_FINANCE_APPROVAL: string;
+      PENDING_WAREHOUSE_APPROVAL: string;
       APPROVED: string;
       SENT: string;
       PARTIALLY_RECEIVED: string;
@@ -292,7 +294,9 @@ export interface Dictionary {
     };
     statusLabels: {
       DRAFT: string;
-      PENDING_APPROVAL: string;
+      PENDING_QC_APPROVAL: string;
+      PENDING_FINANCE_APPROVAL: string;
+      PENDING_WAREHOUSE_APPROVAL: string;
       APPROVED: string;
       SENT: string;
       PARTIALLY_RECEIVED: string;
@@ -302,7 +306,9 @@ export interface Dictionary {
     statusTabs: {
       all: string;
       draft: string;
-      pending: string;
+      pendingQC: string;
+      pendingFinance: string;
+      pendingWarehouse: string;
       approved: string;
       sent: string;
       received: string;
@@ -317,6 +323,21 @@ export interface Dictionary {
       approvedBy: string;
       notes: string;
       actions: string;
+    };
+    approval: {
+      stepsTitle: string;
+      qcApproval: string;
+      financeApproval: string;
+      warehouseApproval: string;
+      approvedBy: string;
+      rejectedBy: string;
+      rejectionReason: string;
+      linkedRequest: string;
+      convertToPO: string;
+      selectSupplier: string;
+      convertSuccess: string;
+      convertFailed: string;
+      alreadyConverted: string;
     };
     optionalNotes: string;
   };

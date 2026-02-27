@@ -25,7 +25,9 @@ interface PurchaseOrder {
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "default",
-  PENDING_APPROVAL: "orange",
+  PENDING_QC_APPROVAL: "orange",
+  PENDING_FINANCE_APPROVAL: "gold",
+  PENDING_WAREHOUSE_APPROVAL: "lime",
   APPROVED: "green",
   SENT: "blue",
   PARTIALLY_RECEIVED: "cyan",
@@ -47,7 +49,9 @@ export default function ProcurementPage() {
 
   const STATUS_LABELS: Record<string, string> = {
     DRAFT: t.procurement.statusLabels.DRAFT,
-    PENDING_APPROVAL: t.procurement.statusLabels.PENDING_APPROVAL,
+    PENDING_QC_APPROVAL: t.procurement.statusLabels.PENDING_QC_APPROVAL,
+    PENDING_FINANCE_APPROVAL: t.procurement.statusLabels.PENDING_FINANCE_APPROVAL,
+    PENDING_WAREHOUSE_APPROVAL: t.procurement.statusLabels.PENDING_WAREHOUSE_APPROVAL,
     APPROVED: t.procurement.statusLabels.APPROVED,
     SENT: t.procurement.statusLabels.SENT,
     PARTIALLY_RECEIVED: t.procurement.statusLabels.PARTIALLY_RECEIVED,
@@ -58,7 +62,7 @@ export default function ProcurementPage() {
   const STATUS_TABS = [
     { key: "", label: t.procurement.statusTabs.all },
     { key: "DRAFT", label: t.procurement.statusTabs.draft },
-    { key: "PENDING_APPROVAL", label: t.procurement.statusTabs.pending },
+    { key: "PENDING_QC_APPROVAL,PENDING_FINANCE_APPROVAL,PENDING_WAREHOUSE_APPROVAL", label: t.procurement.statusTabs.pendingQC },
     { key: "APPROVED", label: t.procurement.statusTabs.approved },
     { key: "SENT", label: t.procurement.statusTabs.sent },
     { key: "RECEIVED", label: t.procurement.statusTabs.received },
@@ -104,7 +108,7 @@ export default function ProcurementPage() {
     {
       title: t.procurement.columns.status,
       dataIndex: "status",
-      width: 150,
+      width: 180,
       render: (status: string) => (
         <Tag color={STATUS_COLORS[status]}>{STATUS_LABELS[status] || status}</Tag>
       ),
@@ -159,7 +163,7 @@ export default function ProcurementPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">{t.procurement.title}</h1>
-        {hasPermission("po:create") && (
+        {hasPermission("po:write") && (
           <Button
             type="primary"
             icon={<PlusOutlined />}

@@ -51,8 +51,12 @@ model User {
   role   UserRole?
 
   // Relations for workflow actions
-  createdPOs          PurchaseOrder[]    @relation("po_created_by")
-  approvedPOs         PurchaseOrder[]    @relation("po_approved_by")
+  createdPOs              PurchaseOrder[]    @relation("po_created_by")
+  approvedPOs             PurchaseOrder[]    @relation("po_approved_by")
+  qcApprovedPOs           PurchaseOrder[]    @relation("po_qc_approved_by")
+  financeApprovedPOs      PurchaseOrder[]    @relation("po_finance_approved_by")
+  warehouseApprovedPOs    PurchaseOrder[]    @relation("po_warehouse_approved_by")
+  rejectedPOs             PurchaseOrder[]    @relation("po_rejected_by")
   procVerifications   Receiving[]        @relation("proc_verified_by")
   qcInspections       Receiving[]        @relation("qc_inspected_by")
   warehouseReceipts   Receiving[]        @relation("warehouse_received_by")
@@ -229,13 +233,35 @@ model PurchaseOrder {
   createdById   String   @map("created_by_id") @db.Uuid
   approvedById  String?  @map("approved_by_id") @db.Uuid
   approvedAt    DateTime? @map("approved_at")
+
+  // 3-step approval tracking
+  qcApprovedById        String?   @map("qc_approved_by_id") @db.Uuid
+  qcApprovedAt          DateTime? @map("qc_approved_at")
+  financeApprovedById   String?   @map("finance_approved_by_id") @db.Uuid
+  financeApprovedAt     DateTime? @map("finance_approved_at")
+  warehouseApprovedById String?   @map("warehouse_approved_by_id") @db.Uuid
+  warehouseApprovedAt   DateTime? @map("warehouse_approved_at")
+
+  // Rejection tracking
+  rejectedById    String?   @map("rejected_by_id") @db.Uuid
+  rejectedAt      DateTime? @map("rejected_at")
+  rejectionReason String?   @map("rejection_reason")
+
+  // Link to originating internal request
+  internalRequestId String? @map("internal_request_id") @db.Uuid
+
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
-  createdBy  User     @relation("po_created_by", fields: [createdById], references: [id])
-  approvedBy User?    @relation("po_approved_by", fields: [approvedById], references: [id])
+  tenant              Tenant           @relation(fields: [tenantId], references: [id])
+  supplier            Supplier         @relation(fields: [supplierId], references: [id])
+  createdBy           User             @relation("po_created_by", fields: [createdById], references: [id])
+  approvedBy          User?            @relation("po_approved_by", fields: [approvedById], references: [id])
+  qcApprovedBy        User?            @relation("po_qc_approved_by", fields: [qcApprovedById], references: [id])
+  financeApprovedBy   User?            @relation("po_finance_approved_by", fields: [financeApprovedById], references: [id])
+  warehouseApprovedBy User?            @relation("po_warehouse_approved_by", fields: [warehouseApprovedById], references: [id])
+  rejectedBy          User?            @relation("po_rejected_by", fields: [rejectedById], references: [id])
+  internalRequest     InternalRequest? @relation(fields: [internalRequestId], references: [id])
 
   lines      PurchaseOrderLine[]
   receivings Receiving[]
@@ -250,7 +276,9 @@ model PurchaseOrder {
 
 enum POStatus {
   DRAFT
-  PENDING_APPROVAL
+  PENDING_QC_APPROVAL
+  PENDING_FINANCE_APPROVAL
+  PENDING_WAREHOUSE_APPROVAL
   APPROVED
   SENT
   PARTIALLY_RECEIVED
@@ -434,7 +462,8 @@ model InternalRequest {
   fulfilledBy User?  @relation("request_fulfilled_by", fields: [fulfilledById], references: [id])
   confirmedBy User?  @relation("request_confirmed_by", fields: [confirmedById], references: [id])
 
-  lines InternalRequestLine[]
+  lines          InternalRequestLine[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([tenantId, requestNumber])
   @@index([tenantId, status])
