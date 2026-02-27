@@ -3,28 +3,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppstoreOutlined } from "@ant-design/icons";
-
-const tabs = [
-  { label: "All Reports", href: "/reports", exact: true, icon: <AppstoreOutlined /> },
-  { label: "Inventory Valuation", href: "/reports/inventory-valuation" },
-  { label: "Purchase Summary", href: "/reports/purchase-summary" },
-  { label: "Payment Aging", href: "/reports/payment-aging" },
-  { label: "Transactions", href: "/reports/transaction-history" },
-  { label: "Stock Movement", href: "/reports/stock-movement" },
-  { label: "Supplier Performance", href: "/reports/supplier-performance" },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export default function ReportsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
+
+  const tabs = [
+    { label: t.reports.title, href: "/reports", exact: true, icon: <AppstoreOutlined /> },
+    { label: t.reports.inventoryValuation, href: "/reports/inventory-valuation" },
+    { label: t.reports.purchaseSummary, href: "/reports/purchase-summary" },
+    { label: t.reports.paymentAging, href: "/reports/payment-aging" },
+    { label: t.reports.transactionHistory, href: "/reports/transaction-history" },
+    { label: t.reports.stockMovement, href: "/reports/stock-movement" },
+    { label: t.reports.supplierPerformance, href: "/reports/supplier-performance" },
+  ];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.reports.title}</h1>
       </div>
       <div className="bg-white rounded-lg shadow">
         <div className="border-b px-4 flex gap-1 overflow-x-auto">

@@ -5,6 +5,7 @@ import { Table, Button, App, Empty } from "antd";
 import { PlayCircleOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { ReceivingStatusTag } from "@/components/receiving/receiving-status-tag";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -38,6 +39,7 @@ interface ReceivingRecord {
 export default function ProcurementQueuePage() {
   const { message } = App.useApp();
   const router = useRouter();
+  const { t } = useTranslation();
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
   const [receivings, setReceivings] = useState<ReceivingRecord[]>([]);
   const [loadingPOs, setLoadingPOs] = useState(true);
@@ -55,10 +57,10 @@ export default function ProcurementQueuePage() {
       if (json2.success) allPOs.push(...(json2.data.data || []));
       setPos(allPOs);
     } else {
-      message.error("Failed to load purchase orders");
+      message.error(t.procurement.failedToLoad);
     }
     setLoadingPOs(false);
-  }, [message]);
+  }, [message, t]);
 
   const fetchReceivings = useCallback(async () => {
     setLoadingRcv(true);
@@ -76,28 +78,28 @@ export default function ProcurementQueuePage() {
   }, [fetchPOs, fetchReceivings]);
 
   const poColumns: ColumnsType<PurchaseOrder> = [
-    { title: "PO Number", dataIndex: "poNumber", width: 130 },
-    { title: "Supplier", dataIndex: ["supplier", "name"], ellipsis: true },
+    { title: t.receiving.procurement.columns.poNumber, dataIndex: "poNumber", width: 130 },
+    { title: t.receiving.procurement.columns.supplier, dataIndex: ["supplier", "name"], ellipsis: true },
     {
-      title: "Amount",
+      title: t.receiving.procurement.columns.totalAmount,
       dataIndex: "totalAmount",
       width: 130,
       align: "right",
       render: (v: number, r) => `${r.currency} ${v.toFixed(2)}`,
     },
     {
-      title: "Items",
+      title: t.receiving.procurement.columns.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
     },
     {
-      title: "Created By",
+      title: t.procurement.columns.createdBy,
       dataIndex: ["createdBy", "fullName"],
       width: 140,
     },
     {
-      title: "Created",
+      title: t.procurement.columns.created,
       dataIndex: "createdAt",
       width: 110,
       render: (v: string) => dayjs(v).format("DD MMM YYYY"),
@@ -112,44 +114,44 @@ export default function ProcurementQueuePage() {
           icon={<PlayCircleOutlined />}
           onClick={() => router.push(`/receiving/procurement/${record.id}`)}
         >
-          Start Receiving
+          {t.receiving.procurement.receiveGoods}
         </Button>
       ),
     },
   ];
 
   const rcvColumns: ColumnsType<ReceivingRecord> = [
-    { title: "Receiving #", dataIndex: "receivingNumber", width: 170 },
+    { title: t.receiving.qc.columns.grn, dataIndex: "receivingNumber", width: 170 },
     {
-      title: "PO #",
+      title: t.receiving.qc.columns.poNumber,
       dataIndex: ["purchaseOrder", "poNumber"],
       width: 130,
     },
     {
-      title: "Supplier",
+      title: t.receiving.procurement.columns.supplier,
       dataIndex: ["purchaseOrder", "supplier", "name"],
       ellipsis: true,
     },
     {
-      title: "Status",
+      title: t.receiving.procurement.columns.status,
       dataIndex: "status",
       width: 170,
       render: (status: string) => <ReceivingStatusTag status={status} />,
     },
     {
-      title: "Verified By",
+      title: t.receiving.procurement.verifiedBy,
       dataIndex: ["procVerifiedBy", "fullName"],
       width: 140,
     },
     {
-      title: "Verified At",
+      title: t.receiving.procurement.verifiedAt,
       dataIndex: "procVerifiedAt",
       width: 140,
       render: (v: string | null) =>
         v ? dayjs(v).format("DD MMM YYYY HH:mm") : "-",
     },
     {
-      title: "Items",
+      title: t.receiving.procurement.columns.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
@@ -160,10 +162,10 @@ export default function ProcurementQueuePage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-3">
-          POs Ready for Receiving
+          {t.receiving.procurement.title}
         </h2>
         {pos.length === 0 && !loadingPOs ? (
-          <Empty description="No approved POs pending receiving" />
+          <Empty description={t.receiving.procurement.noItemsToReceive} />
         ) : (
           <Table
             rowKey="id"
@@ -178,10 +180,10 @@ export default function ProcurementQueuePage() {
 
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-3">
-          Recently Verified
+          {t.receiving.procurement.recentlyVerified}
         </h2>
         {receivings.length === 0 && !loadingRcv ? (
-          <Empty description="No recently verified receiving records" />
+          <Empty description={t.receiving.procurement.noRecentlyVerified} />
         ) : (
           <Table
             rowKey="id"

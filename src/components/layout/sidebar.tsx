@@ -3,33 +3,35 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserContext } from "@/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface SidebarProps {
   userContext: UserContext;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: "📊" },
-  { name: "Items", href: "/items", icon: "📦" },
-  { name: "Locations", href: "/locations", icon: "📍" },
-  { name: "Suppliers", href: "/suppliers", icon: "🏭" },
-  { name: "Purchase Orders", href: "/procurement", icon: "📋" },
-  { name: "Receiving", href: "/receiving", icon: "📥" },
-  { name: "Internal Requests", href: "/requests", icon: "📤" },
-  { name: "Transfers", href: "/transfers", icon: "🔄" },
-  { name: "Store Ordering", href: "/store/order", icon: "🛒" },
-  { name: "Finance", href: "/finance", icon: "💰" },
-  { name: "Reports", href: "/reports", icon: "📈" },
-  { name: "Audit Logs", href: "/admin/audit-logs", icon: "🔍" },
-];
-
 export function Sidebar({ userContext }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const navigation = [
+    { name: t.nav.dashboard, href: "/dashboard", icon: "📊" },
+    { name: t.nav.items, href: "/items", icon: "📦" },
+    { name: t.nav.locations, href: "/locations", icon: "📍" },
+    { name: t.nav.suppliers, href: "/suppliers", icon: "🏭" },
+    { name: t.nav.purchaseOrders, href: "/procurement", icon: "📋" },
+    { name: t.nav.receiving, href: "/receiving", icon: "📥" },
+    { name: t.nav.internalRequests, href: "/requests", icon: "📤" },
+    { name: t.nav.transfers, href: "/transfers", icon: "🔄" },
+    { name: t.nav.storeOrdering, href: "/store/order", icon: "🛒" },
+    { name: t.nav.finance, href: "/finance", icon: "💰" },
+    { name: t.nav.reports, href: "/reports", icon: "📈" },
+    { name: t.nav.auditLogs, href: "/admin/audit-logs", icon: "🔍" },
+  ];
 
   return (
     <div className="w-64 bg-white shadow-md flex flex-col">
       <div className="p-4 border-b">
-        <h1 className="text-lg font-bold text-gray-900">Supply Chain ERP</h1>
+        <h1 className="text-lg font-bold text-gray-900">{t.nav.supplyChainERP}</h1>
         <p className="text-xs text-gray-500 mt-1">{userContext.tenantName}</p>
       </div>
       <nav className="flex-1 py-4 overflow-y-auto">
@@ -37,7 +39,7 @@ export function Sidebar({ userContext }: SidebarProps) {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
-              key={item.name}
+              key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
                 isActive

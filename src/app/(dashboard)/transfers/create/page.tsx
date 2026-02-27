@@ -18,6 +18,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface InventoryItem {
@@ -51,6 +52,7 @@ export default function CreateTransferPage() {
   const { message } = App.useApp();
   const router = useRouter();
   const hasPermission = useUserStore((s) => s.hasPermission);
+  const { t } = useTranslation();
   const [locations, setLocations] = useState<Location[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [fromLocationId, setFromLocationId] = useState<string>("");
@@ -91,7 +93,7 @@ export default function CreateTransferPage() {
 
   const addItem = (inv: InventoryItem) => {
     if (lines.find((l) => l.itemId === inv.item.id)) {
-      message.warning("Item already added");
+      message.warning(t.transfers.create.itemAlreadyAdded);
       return;
     }
     setLines((prev) => [
@@ -127,15 +129,15 @@ export default function CreateTransferPage() {
 
   const handleSubmit = async () => {
     if (!fromLocationId || !toLocationId) {
-      message.error("Select both source and destination locations");
+      message.error(t.transfers.create.selectBothLocations);
       return;
     }
     if (fromLocationId === toLocationId) {
-      message.error("Source and destination must be different");
+      message.error(t.transfers.create.locationsMustDiffer);
       return;
     }
     if (lines.length === 0) {
-      message.error("Add at least one item");
+      message.error(t.transfers.create.addAtLeastOneItem);
       return;
     }
 
@@ -160,31 +162,31 @@ export default function CreateTransferPage() {
       const status = json.data.status;
       if (status === "PENDING") {
         message.success(
-          `Transfer ${json.data.transferNumber} created! Requires approval (value > $1,000).`
+          `${t.transfers.columns.transferNumber} ${json.data.transferNumber} ${t.transfers.create.transferCreatedPending}`
         );
         router.push("/transfers/pending");
       } else {
         message.success(
-          `Transfer ${json.data.transferNumber} created and auto-approved!`
+          `${t.transfers.columns.transferNumber} ${json.data.transferNumber} ${t.transfers.create.transferCreatedAutoApproved}`
         );
         router.push("/transfers/fulfill");
       }
     } else {
-      message.error(json.error || "Failed to create transfer");
+      message.error(json.error || t.transfers.create.failedToCreate);
     }
     setSubmitting(false);
   };
 
   if (!hasPermission("transfers:write")) {
-    return <Empty description="You don't have permission to create transfers" />;
+    return <Empty description={t.transfers.create.noPermission} />;
   }
 
   const stockColumns: ColumnsType<InventoryItem> = [
-    { title: "Code", dataIndex: ["item", "code"], width: 100 },
-    { title: "Item", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 60, align: "center" },
+    { title: t.transfers.create.code, dataIndex: ["item", "code"], width: 100 },
+    { title: t.transfers.create.item, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.transfers.create.uom, dataIndex: ["item", "uom"], width: 60, align: "center" },
     {
-      title: "Available",
+      title: t.transfers.create.available,
       dataIndex: "quantity",
       width: 90,
       align: "right",
@@ -203,24 +205,24 @@ export default function CreateTransferPage() {
             lines.some((l) => l.itemId === record.item.id)
           }
         >
-          Add
+          {t.common.add}
         </Button>
       ),
     },
   ];
 
   const lineColumns: ColumnsType<LineItem> = [
-    { title: "Code", dataIndex: "itemCode", width: 100 },
-    { title: "Item", dataIndex: "itemName", ellipsis: true },
-    { title: "UOM", dataIndex: "uom", width: 60, align: "center" },
+    { title: t.transfers.create.code, dataIndex: "itemCode", width: 100 },
+    { title: t.transfers.create.item, dataIndex: "itemName", ellipsis: true },
+    { title: t.transfers.create.uom, dataIndex: "uom", width: 60, align: "center" },
     {
-      title: "Available",
+      title: t.transfers.create.available,
       dataIndex: "available",
       width: 90,
       align: "right",
     },
     {
-      title: "Qty",
+      title: t.transfers.create.qty,
       width: 110,
       render: (_, record) => (
         <InputNumber
@@ -234,17 +236,17 @@ export default function CreateTransferPage() {
       ),
     },
     {
-      title: "Est. Value",
+      title: t.transfers.create.estValue,
       width: 100,
       align: "right",
       render: (_, record) => `$${(record.quantity * record.avgCost).toFixed(2)}`,
     },
     {
-      title: "Notes",
+      title: t.common.notes,
       width: 150,
       render: (_, record) => (
         <Input
-          placeholder="Notes..."
+          placeholder={`${t.common.notes}...`}
           value={record.notes}
           onChange={(e) => updateLine(record.itemId, "notes", e.target.value)}
           size="small"
@@ -271,10 +273,10 @@ export default function CreateTransferPage() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Source Location *
+            {t.transfers.create.fromLocation} *
           </label>
           <Select
-            placeholder="Select source..."
+            placeholder={t.transfers.create.selectSource}
             value={fromLocationId || undefined}
             onChange={(val) => setFromLocationId(val)}
             className="w-full"
@@ -290,10 +292,10 @@ export default function CreateTransferPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Destination Location *
+            {t.transfers.create.toLocation} *
           </label>
           <Select
-            placeholder="Select destination..."
+            placeholder={t.transfers.create.selectDestination}
             value={toLocationId || undefined}
             onChange={setToLocationId}
             className="w-full"
@@ -312,10 +314,10 @@ export default function CreateTransferPage() {
       {fromLocationId && (
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-3">
-            Stock at Source Location
+            {t.transfers.create.stockAtSource}
           </h2>
           {inventory.length === 0 ? (
-            <Empty description="No inventory at this location" />
+            <Empty description={t.transfers.create.noInventoryAtLocation} />
           ) : (
             <Table
               rowKey="id"
@@ -332,13 +334,13 @@ export default function CreateTransferPage() {
       {lines.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-3">
-            Transfer Items ({lines.length})
+            {t.transfers.create.transferItems} ({lines.length})
           </h2>
 
           {totalValue > 1000 && (
             <Alert
               type="info"
-              message={`Total value: $${totalValue.toFixed(2)} — This transfer will require manager approval.`}
+              message={`${t.common.total}: $${totalValue.toFixed(2)} — ${t.transfers.create.approvalRequired}`}
               className="mb-3"
               showIcon
             />
@@ -354,11 +356,11 @@ export default function CreateTransferPage() {
 
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Transfer Notes
+              {t.transfers.create.notes}
             </label>
             <Input.TextArea
               rows={2}
-              placeholder="Reason for transfer..."
+              placeholder={t.transfers.create.notesPlaceholder}
               value={transferNotes}
               onChange={(e) => setTransferNotes(e.target.value)}
             />
@@ -366,7 +368,7 @@ export default function CreateTransferPage() {
 
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-gray-500">
-              Estimated total value: <strong>${totalValue.toFixed(2)}</strong>
+              {t.transfers.create.estimatedTotalValue} <strong>${totalValue.toFixed(2)}</strong>
             </span>
             <Button
               type="primary"
@@ -376,7 +378,7 @@ export default function CreateTransferPage() {
               loading={submitting}
               disabled={!fromLocationId || !toLocationId}
             >
-              Submit Transfer
+              {t.transfers.create.submitTransfer}
             </Button>
           </div>
         </div>

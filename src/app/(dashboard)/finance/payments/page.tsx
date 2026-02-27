@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { PlusOutlined, DollarOutlined } from "@ant-design/icons";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -56,6 +57,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function PaymentsPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const hasPermission = useUserStore((s) => s.hasPermission);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [pos, setPos] = useState<PO[]>([]);
@@ -81,13 +83,13 @@ export default function PaymentsPage() {
         setPayments(json.data.data);
         setTotal(json.data.total);
       } else {
-        message.error("Failed to load payments");
+        message.error(t.finance.payments.failedToLoad);
       }
     } catch {
-      message.error("Network error loading payments");
+      message.error(t.finance.payments.networkErrorLoad);
     }
     setLoading(false);
-  }, [page, statusFilter, message]);
+  }, [page, statusFilter, message, t]);
 
   const fetchPOs = useCallback(async () => {
     try {
@@ -125,15 +127,15 @@ export default function PaymentsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        message.success("Payment recorded!");
+        message.success(t.finance.payments.paymentRecorded);
         setModalOpen(false);
         form.resetFields();
         fetchPayments();
       } else {
-        message.error(json.error || "Failed to record payment");
+        message.error(json.error || t.finance.payments.failedToRecord);
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setSubmitting(false);
   };
@@ -147,54 +149,54 @@ export default function PaymentsPage() {
 
   const columns: ColumnsType<Payment> = [
     {
-      title: "PO #",
+      title: t.finance.payments.columns.poNumber,
       dataIndex: ["purchaseOrder", "poNumber"],
       width: 120,
     },
     {
-      title: "Supplier",
+      title: t.finance.payments.columns.supplier,
       dataIndex: ["purchaseOrder", "supplier", "name"],
       ellipsis: true,
     },
     {
-      title: "Amount",
+      title: t.common.amount,
       dataIndex: "amount",
       width: 120,
       align: "right",
       render: (v: number, r) => `${r.currency} ${v.toFixed(2)}`,
     },
     {
-      title: "Status",
+      title: t.common.status,
       dataIndex: "status",
       width: 100,
-      render: (s: string) => <Tag color={STATUS_COLORS[s]}>{s}</Tag>,
+      render: (s: string) => <Tag color={STATUS_COLORS[s]}>{t.finance.payments.statusLabels[s as keyof typeof t.finance.payments.statusLabels] || s}</Tag>,
     },
     {
-      title: "Due Date",
+      title: t.finance.payments.columns.dueDate,
       dataIndex: "dueDate",
       width: 120,
       render: (v: string | null) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
     },
     {
-      title: "Paid At",
+      title: t.finance.payments.paidAt,
       dataIndex: "paidAt",
       width: 120,
       render: (v: string | null) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
     },
     {
-      title: "Method",
+      title: t.finance.payments.paymentMethod,
       dataIndex: "paymentMethod",
       width: 100,
       render: (v: string | null) => v || "-",
     },
     {
-      title: "Reference",
+      title: t.finance.payments.reference,
       dataIndex: "referenceNumber",
       width: 120,
       render: (v: string | null) => v || "-",
     },
     {
-      title: "Recorded By",
+      title: t.finance.payments.recordedBy,
       dataIndex: ["recordedBy", "fullName"],
       width: 130,
     },
@@ -205,7 +207,7 @@ export default function PaymentsPage() {
       <div className="grid grid-cols-2 gap-4">
         <Card size="small">
           <Statistic
-            title="Total Paid"
+            title={t.finance.payments.totalPaid}
             value={totalPaid}
             precision={2}
             prefix={<DollarOutlined />}
@@ -214,7 +216,7 @@ export default function PaymentsPage() {
         </Card>
         <Card size="small">
           <Statistic
-            title="Total Outstanding"
+            title={t.finance.payments.totalOutstanding}
             value={totalPending}
             precision={2}
             prefix={<DollarOutlined />}
@@ -232,7 +234,7 @@ export default function PaymentsPage() {
               size="small"
               onClick={() => { setStatusFilter(s); setPage(1); }}
             >
-              {s || "All"}
+              {s ? (t.finance.payments.statusLabels[s as keyof typeof t.finance.payments.statusLabels] || s) : t.common.all}
             </Button>
           ))}
         </div>
@@ -242,7 +244,7 @@ export default function PaymentsPage() {
             icon={<PlusOutlined />}
             onClick={() => setModalOpen(true)}
           >
-            Record Payment
+            {t.finance.payments.recordPayment}
           </Button>
         )}
       </div>
@@ -262,7 +264,7 @@ export default function PaymentsPage() {
       />
 
       <Modal
-        title="Record Payment"
+        title={t.finance.payments.recordPayment}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
@@ -270,13 +272,13 @@ export default function PaymentsPage() {
         <Form form={form} layout="vertical" onFinish={handleCreate}>
           <Form.Item
             name="purchaseOrderId"
-            label="Purchase Order"
+            label={t.finance.payments.purchaseOrder}
             rules={[{ required: true }]}
           >
             <Select
               showSearch
               optionFilterProp="children"
-              placeholder="Select PO..."
+              placeholder={t.finance.payments.selectPO}
               options={pos.map((po) => ({
                 value: po.id,
                 label: `${po.poNumber} - ${po.supplier.name} ($${po.totalAmount.toFixed(2)})`,
@@ -285,42 +287,42 @@ export default function PaymentsPage() {
           </Form.Item>
           <Form.Item
             name="amount"
-            label="Amount"
+            label={t.finance.payments.paymentAmount}
             rules={[{ required: true }]}
           >
             <InputNumber min={0.01} step={0.01} className="w-full" />
           </Form.Item>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="dueDate" label="Due Date">
+            <Form.Item name="dueDate" label={t.finance.payments.dueDate}>
               <DatePicker className="w-full" />
             </Form.Item>
-            <Form.Item name="paidAt" label="Paid Date">
+            <Form.Item name="paidAt" label={t.finance.payments.paidDate}>
               <DatePicker className="w-full" />
             </Form.Item>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="paymentMethod" label="Method">
+            <Form.Item name="paymentMethod" label={t.finance.payments.paymentMethod}>
               <Select
-                placeholder="Select..."
+                placeholder={t.common.filter}
                 options={[
-                  { value: "Bank Transfer", label: "Bank Transfer" },
-                  { value: "Check", label: "Check" },
-                  { value: "Cash", label: "Cash" },
-                  { value: "Credit Card", label: "Credit Card" },
+                  { value: "Bank Transfer", label: t.finance.payments.bankTransfer },
+                  { value: "Check", label: t.finance.payments.check },
+                  { value: "Cash", label: t.finance.payments.cash },
+                  { value: "Credit Card", label: t.finance.payments.creditCard },
                 ]}
               />
             </Form.Item>
-            <Form.Item name="referenceNumber" label="Reference #">
-              <Input placeholder="Invoice/reference number" />
+            <Form.Item name="referenceNumber" label={t.finance.payments.reference}>
+              <Input placeholder={t.finance.payments.invoiceReference} />
             </Form.Item>
           </div>
-          <Form.Item name="notes" label="Notes">
+          <Form.Item name="notes" label={t.common.notes}>
             <Input.TextArea rows={2} />
           </Form.Item>
           <div className="flex justify-end gap-2">
-            <Button onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={() => setModalOpen(false)}>{t.common.cancel}</Button>
             <Button type="primary" htmlType="submit" loading={submitting}>
-              Record Payment
+              {t.finance.payments.recordPayment}
             </Button>
           </div>
         </Form>

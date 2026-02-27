@@ -17,6 +17,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface InventoryItem {
@@ -42,6 +43,7 @@ export default function CreateRequestPage() {
   const { message } = App.useApp();
   const router = useRouter();
   const hasPermission = useUserStore((s) => s.hasPermission);
+  const { t } = useTranslation();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([]);
@@ -55,10 +57,10 @@ export default function CreateRequestPage() {
     if (json.success) {
       setInventory(json.data.data || []);
     } else {
-      message.error("Failed to load inventory");
+      message.error(t.requests.create.failedToLoadInventory);
     }
     setLoading(false);
-  }, [message]);
+  }, [message, t]);
 
   useEffect(() => {
     fetchInventory();
@@ -94,7 +96,7 @@ export default function CreateRequestPage() {
 
   const addItem = (item: (typeof aggregatedStock)[0]) => {
     if (lines.find((l) => l.itemId === item.itemId)) {
-      message.warning("Item already added");
+      message.warning(t.requests.create.itemAlreadyAdded);
       return;
     }
     setLines((prev) => [
@@ -124,7 +126,7 @@ export default function CreateRequestPage() {
 
   const handleSubmit = async () => {
     if (lines.length === 0) {
-      message.error("Add at least one item");
+      message.error(t.requests.create.addItems);
       return;
     }
     for (const line of lines) {
@@ -156,27 +158,27 @@ export default function CreateRequestPage() {
 
     const json = await res.json();
     if (json.success) {
-      message.success(`Request ${json.data.requestNumber} created successfully!`);
+      message.success(`${t.requests.create.requestCreated}`);
       setLines([]);
       setRequestNotes("");
       router.push("/requests/fulfill");
     } else {
-      message.error(json.error || "Failed to create request");
+      message.error(json.error || t.requests.create.failedToCreate);
     }
     setSubmitting(false);
   };
 
   if (!hasPermission("requests:write")) {
-    return <Empty description="You don't have permission to create requests" />;
+    return <Empty description={t.requests.create.noPermission} />;
   }
 
   // Stock table columns
   const stockColumns: ColumnsType<(typeof aggregatedStock)[0]> = [
-    { title: "Code", dataIndex: "itemCode", width: 100 },
-    { title: "Item", dataIndex: "itemName", ellipsis: true },
-    { title: "UOM", dataIndex: "uom", width: 60, align: "center" },
+    { title: t.common.code, dataIndex: "itemCode", width: 100 },
+    { title: t.procurement.columns.item, dataIndex: "itemName", ellipsis: true },
+    { title: t.procurement.columns.uom, dataIndex: "uom", width: 60, align: "center" },
     {
-      title: "Available",
+      title: t.requests.create.available,
       dataIndex: "totalQty",
       width: 100,
       align: "right",
@@ -187,12 +189,12 @@ export default function CreateRequestPage() {
       ),
     },
     {
-      title: "Status",
+      title: t.common.status,
       width: 100,
       render: (_, r) => {
-        if (r.totalQty <= 0) return <Tag color="red">Out of Stock</Tag>;
-        if (r.totalQty <= r.minStock) return <Tag color="orange">Low</Tag>;
-        return <Tag color="green">In Stock</Tag>;
+        if (r.totalQty <= 0) return <Tag color="red">{t.requests.create.outOfStock}</Tag>;
+        if (r.totalQty <= r.minStock) return <Tag color="orange">{t.requests.create.low}</Tag>;
+        return <Tag color="green">{t.requests.create.inStock}</Tag>;
       },
     },
     {
@@ -206,7 +208,7 @@ export default function CreateRequestPage() {
           onClick={() => addItem(record)}
           disabled={record.totalQty <= 0 || lines.some((l) => l.itemId === record.itemId)}
         >
-          Add
+          {t.common.add}
         </Button>
       ),
     },
@@ -214,17 +216,17 @@ export default function CreateRequestPage() {
 
   // Request lines columns
   const lineColumns: ColumnsType<LineItem> = [
-    { title: "Code", dataIndex: "itemCode", width: 100 },
-    { title: "Item", dataIndex: "itemName", ellipsis: true },
-    { title: "UOM", dataIndex: "uom", width: 60, align: "center" },
+    { title: t.common.code, dataIndex: "itemCode", width: 100 },
+    { title: t.procurement.columns.item, dataIndex: "itemName", ellipsis: true },
+    { title: t.procurement.columns.uom, dataIndex: "uom", width: 60, align: "center" },
     {
-      title: "Available",
+      title: t.requests.create.available,
       dataIndex: "available",
       width: 90,
       align: "right",
     },
     {
-      title: "Qty",
+      title: t.common.quantity,
       width: 110,
       render: (_, record) => (
         <InputNumber
@@ -238,11 +240,11 @@ export default function CreateRequestPage() {
       ),
     },
     {
-      title: "Notes",
+      title: t.common.notes,
       width: 180,
       render: (_, record) => (
         <Input
-          placeholder="Notes..."
+          placeholder={`${t.common.notes}...`}
           value={record.notes}
           onChange={(e) => updateLine(record.itemId, "notes", e.target.value)}
           size="small"
@@ -268,7 +270,7 @@ export default function CreateRequestPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-3">
-          Available Stock
+          {t.requests.create.availableStock}
         </h2>
         <Table
           rowKey="itemId"
@@ -282,10 +284,10 @@ export default function CreateRequestPage() {
 
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-3">
-          Request Items ({lines.length})
+          {t.requests.create.requestItems} ({lines.length})
         </h2>
         {lines.length === 0 ? (
-          <Empty description="Click 'Add' on items above to build your request" />
+          <Empty description={t.requests.create.clickAddToStart} />
         ) : (
           <>
             <Table
@@ -297,11 +299,11 @@ export default function CreateRequestPage() {
             />
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Request Notes
+                {t.requests.create.notes}
               </label>
               <Input.TextArea
                 rows={2}
-                placeholder="Why are these items needed?..."
+                placeholder={t.requests.create.notesPlaceholder}
                 value={requestNotes}
                 onChange={(e) => setRequestNotes(e.target.value)}
               />
@@ -314,7 +316,7 @@ export default function CreateRequestPage() {
                 onClick={handleSubmit}
                 loading={submitting}
               >
-                Submit Request
+                {t.requests.create.submitRequest}
               </Button>
             </div>
           </>

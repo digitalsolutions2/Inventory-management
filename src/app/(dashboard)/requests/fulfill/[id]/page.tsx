@@ -15,6 +15,7 @@ import {
 import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -58,6 +59,7 @@ export default function FulfillRequestPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const user = useUserStore((s) => s.user);
+  const { t } = useTranslation();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,13 +87,13 @@ export default function FulfillRequestPage() {
         }))
       );
     } else {
-      message.error("Failed to load request");
+      message.error(t.requests.fulfill.failedToLoad);
     }
     if (locJson.success) {
       setLocations(locJson.data.data || []);
     }
     setLoading(false);
-  }, [id, message]);
+  }, [id, message, t]);
 
   useEffect(() => {
     fetchData();
@@ -106,7 +108,7 @@ export default function FulfillRequestPage() {
   const handleSubmit = async () => {
     if (!request) return;
     if (!locationId) {
-      message.error("Please select the source location");
+      message.error(t.requests.fulfill.selectSourceLocation);
       return;
     }
 
@@ -123,10 +125,10 @@ export default function FulfillRequestPage() {
 
     const json = await res.json();
     if (json.success) {
-      message.success("Request fulfilled! Items issued to requester.");
+      message.success(t.requests.fulfill.fulfilled);
       router.push("/requests/fulfill");
     } else {
-      message.error(json.error || "Failed to fulfill request");
+      message.error(json.error || t.requests.fulfill.failedToFulfill);
     }
     setSubmitting(false);
   };
@@ -140,23 +142,23 @@ export default function FulfillRequestPage() {
   }
 
   if (!request) {
-    return <Alert type="error" message="Request not found" showIcon />;
+    return <Alert type="error" message={t.requests.fulfill.requestNotFound} showIcon />;
   }
 
   const isSameUser = request.createdBy.id === user?.id;
 
   const columns: ColumnsType<RequestLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70, align: "center" },
+    { title: t.requests.fulfill.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.requests.fulfill.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.requests.fulfill.uom, dataIndex: ["item", "uom"], width: 70, align: "center" },
     {
-      title: "Requested",
+      title: t.requests.fulfill.requested,
       dataIndex: "requestedQty",
       width: 100,
       align: "right",
     },
     {
-      title: "Issue Qty",
+      title: t.requests.fulfill.actualQty,
       width: 120,
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
@@ -174,13 +176,13 @@ export default function FulfillRequestPage() {
       },
     },
     {
-      title: "Notes",
+      title: t.requests.fulfill.notes,
       width: 180,
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
         return (
           <Input
-            placeholder="Pick notes..."
+            placeholder={t.requests.fulfill.pickNotes}
             value={input?.notes}
             onChange={(e) => updateLine(record.id, "notes", e.target.value)}
             disabled={isSameUser}
@@ -198,31 +200,33 @@ export default function FulfillRequestPage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/requests/fulfill")}
       >
-        Back to Queue
+        {t.requests.fulfill.backToQueue}
       </Button>
 
       {isSameUser && (
         <Alert
           type="warning"
-          message="Segregation of Duties"
-          description="You cannot fulfill a request you created. A warehouse user must fulfill this."
+          message={t.requests.fulfill.segregationTitle}
+          description={t.requests.fulfill.segregationDesc}
           showIcon
         />
       )}
 
       <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Request #">
+        <Descriptions.Item label={t.requests.fulfill.requestNumber}>
           {request.requestNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="Status">{request.status}</Descriptions.Item>
-        <Descriptions.Item label="Requested By">
+        <Descriptions.Item label={t.common.status}>
+          {t.requests.statusLabels[request.status as keyof typeof t.requests.statusLabels] || request.status}
+        </Descriptions.Item>
+        <Descriptions.Item label={t.requests.fulfill.columns.requestedBy}>
           {request.createdBy.fullName}
         </Descriptions.Item>
-        <Descriptions.Item label="Created">
+        <Descriptions.Item label={t.common.createdAt}>
           {dayjs(request.createdAt).format("DD MMM YYYY HH:mm")}
         </Descriptions.Item>
         {request.notes && (
-          <Descriptions.Item label="Request Notes" span={2}>
+          <Descriptions.Item label={t.requests.fulfill.requestNotes} span={2}>
             {request.notes}
           </Descriptions.Item>
         )}
@@ -230,10 +234,10 @@ export default function FulfillRequestPage() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Source Location (pick from) *
+          {t.requests.fulfill.sourceLocation} *
         </label>
         <Select
-          placeholder="Select warehouse location..."
+          placeholder={t.requests.fulfill.selectWarehouse}
           value={locationId || undefined}
           onChange={setLocationId}
           disabled={isSameUser}
@@ -248,7 +252,7 @@ export default function FulfillRequestPage() {
       </div>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">Line Items</h3>
+        <h3 className="text-base font-semibold mb-2">{t.requests.fulfill.lineItems}</h3>
         <Table
           rowKey="id"
           columns={columns}
@@ -260,11 +264,11 @@ export default function FulfillRequestPage() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Fulfillment Notes
+          {t.requests.fulfill.fulfillmentNotes}
         </label>
         <Input.TextArea
           rows={2}
-          placeholder="Picking notes..."
+          placeholder={t.requests.fulfill.pickingNotes}
           value={fulfillNotes}
           onChange={(e) => setFulfillNotes(e.target.value)}
           disabled={isSameUser}
@@ -280,7 +284,7 @@ export default function FulfillRequestPage() {
           loading={submitting}
           disabled={isSameUser || !locationId}
         >
-          Confirm Issue
+          {t.requests.fulfill.fulfillItems}
         </Button>
       </div>
     </div>

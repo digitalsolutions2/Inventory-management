@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Table, Button, Tag, App, Empty } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -21,6 +22,7 @@ interface RequestRecord {
 export default function ConfirmQueuePage() {
   const { message } = App.useApp();
   const router = useRouter();
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +33,7 @@ export default function ConfirmQueuePage() {
     if (json.success) {
       setRequests(json.data.data || []);
     } else {
-      message.error("Failed to load requests");
+      message.error(t.requests.confirm.failedToLoad);
     }
     setLoading(false);
   }, [message]);
@@ -41,32 +43,32 @@ export default function ConfirmQueuePage() {
   }, [fetchRequests]);
 
   const columns: ColumnsType<RequestRecord> = [
-    { title: "Request #", dataIndex: "requestNumber", width: 130 },
+    { title: t.requests.confirm.columns.requestNumber, dataIndex: "requestNumber", width: 130 },
     {
-      title: "Status",
+      title: t.common.status,
       dataIndex: "status",
       width: 100,
-      render: () => <Tag color="blue">Issued</Tag>,
+      render: () => <Tag color="blue">{t.requests.statusLabels.FULFILLED}</Tag>,
     },
     {
-      title: "Requested By",
+      title: t.requests.columns.requestedBy,
       dataIndex: ["createdBy", "fullName"],
       width: 150,
     },
     {
-      title: "Fulfilled By",
+      title: t.requests.confirm.fulfilledBy,
       dataIndex: ["fulfilledBy", "fullName"],
       width: 150,
     },
     {
-      title: "Fulfilled At",
+      title: t.requests.confirm.fulfilledAt,
       dataIndex: "fulfilledAt",
       width: 150,
       render: (v: string | null) =>
         v ? dayjs(v).format("DD MMM YYYY HH:mm") : "-",
     },
     {
-      title: "Items",
+      title: t.common.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
@@ -81,14 +83,14 @@ export default function ConfirmQueuePage() {
           icon={<CheckCircleOutlined />}
           onClick={() => router.push(`/requests/confirm/${record.id}`)}
         >
-          Confirm
+          {t.common.confirm}
         </Button>
       ),
     },
   ];
 
   if (requests.length === 0 && !loading) {
-    return <Empty description="No issued requests pending confirmation" />;
+    return <Empty description={t.requests.confirm.noIssuedRequests} />;
   }
 
   return (

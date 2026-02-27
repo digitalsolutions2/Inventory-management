@@ -2,6 +2,7 @@
 
 import { Modal, Form, Input, Select, InputNumber } from "antd";
 import { useEffect } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 interface Category {
   id: string;
@@ -50,6 +51,7 @@ export function ItemFormModal({
   loading,
 }: ItemFormModalProps) {
   const [form] = Form.useForm<ItemFormValues>();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (open) {
@@ -68,7 +70,7 @@ export function ItemFormModal({
 
   return (
     <Modal
-      title={editingItem ? "Edit Item" : "Add Item"}
+      title={editingItem ? t.items.form.editTitle : t.items.form.title}
       open={open}
       onOk={handleOk}
       onCancel={onCancel}
@@ -80,25 +82,25 @@ export function ItemFormModal({
         <div className="grid grid-cols-2 gap-x-4">
           <Form.Item
             name="code"
-            label="Item Code"
-            rules={[{ required: true, message: "Required" }]}
+            label={t.items.form.code}
+            rules={[{ required: true }]}
           >
-            <Input placeholder="e.g. ITEM-001" disabled={!!editingItem} />
+            <Input placeholder={t.items.form.codePlaceholder} disabled={!!editingItem} />
           </Form.Item>
           <Form.Item
             name="name"
-            label="Item Name"
-            rules={[{ required: true, message: "Required" }]}
+            label={t.items.form.name}
+            rules={[{ required: true }]}
           >
-            <Input placeholder="Item name" />
+            <Input placeholder={t.items.form.namePlaceholder} />
           </Form.Item>
         </div>
-        <Form.Item name="description" label="Description">
-          <Input.TextArea rows={2} placeholder="Optional description" />
+        <Form.Item name="description" label={t.items.form.description}>
+          <Input.TextArea rows={2} placeholder={t.items.form.descriptionPlaceholder} />
         </Form.Item>
         <div className="grid grid-cols-2 gap-x-4">
-          <Form.Item name="categoryId" label="Category">
-            <Select allowClear placeholder="Select category">
+          <Form.Item name="categoryId" label={t.items.form.category}>
+            <Select allowClear placeholder={t.items.form.categoryPlaceholder}>
               {categories.map((c) => (
                 <Select.Option key={c.id} value={c.id}>
                   {c.name}
@@ -106,18 +108,18 @@ export function ItemFormModal({
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="uom" label="Unit of Measure">
+          <Form.Item name="uom" label={t.items.form.uom}>
             <Select options={UOM_OPTIONS} />
           </Form.Item>
         </div>
         <div className="grid grid-cols-3 gap-x-4">
-          <Form.Item name="minStock" label="Min Stock">
+          <Form.Item name="minStock" label={t.items.form.minStock}>
             <InputNumber min={0} className="w-full" />
           </Form.Item>
-          <Form.Item name="maxStock" label="Max Stock">
+          <Form.Item name="maxStock" label={t.items.form.maxStock}>
             <InputNumber min={0} className="w-full" />
           </Form.Item>
-          <Form.Item name="reorderPoint" label="Reorder Point">
+          <Form.Item name="reorderPoint" label={t.items.form.reorderPoint}>
             <InputNumber min={0} className="w-full" />
           </Form.Item>
         </div>

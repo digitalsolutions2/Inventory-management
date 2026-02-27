@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -52,6 +53,7 @@ interface LineInput {
 
 export default function ReceiveTransferPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [transfer, setTransfer] = useState<TransferDetail | null>(null);
@@ -74,7 +76,7 @@ export default function ReceiveTransferPage() {
         }))
       );
     } else {
-      message.error("Failed to load transfer");
+      message.error(t.transfers.receive.failedToLoad);
     }
     setLoading(false);
   }, [id, message]);
@@ -104,12 +106,10 @@ export default function ReceiveTransferPage() {
 
     const json = await res.json();
     if (json.success) {
-      message.success(
-        `Transfer received! Items added to ${transfer.toLocation.name}.`
-      );
+      message.success(t.transfers.receive.received);
       router.push("/transfers/receive");
     } else {
-      message.error(json.error || "Failed to receive transfer");
+      message.error(json.error || t.transfers.receive.failedToReceive);
     }
     setSubmitting(false);
   };
@@ -123,7 +123,7 @@ export default function ReceiveTransferPage() {
   }
 
   if (!transfer) {
-    return <Alert type="error" message="Transfer not found" showIcon />;
+    return <Alert type="error" message={t.transfers.receive.transferNotFound} showIcon />;
   }
 
   // Determine step status
@@ -143,17 +143,17 @@ export default function ReceiveTransferPage() {
   };
 
   const columns: ColumnsType<TransferLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70, align: "center" },
+    { title: t.transfers.receive.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.transfers.receive.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.transfers.receive.uom, dataIndex: ["item", "uom"], width: 70, align: "center" },
     {
-      title: "Shipped",
+      title: t.transfers.receive.shipped,
       dataIndex: "quantity",
       width: 100,
       align: "right",
     },
     {
-      title: "Received Qty",
+      title: t.transfers.receive.receivedQty,
       width: 120,
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
@@ -170,26 +170,26 @@ export default function ReceiveTransferPage() {
       },
     },
     {
-      title: "Match?",
+      title: t.transfers.receive.match,
       width: 80,
       align: "center",
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
         return input?.receivedQty === record.quantity ? (
-          <span className="text-green-600">Yes</span>
+          <span className="text-green-600">{t.common.yes}</span>
         ) : (
-          <span className="text-red-600">No</span>
+          <span className="text-red-600">{t.common.no}</span>
         );
       },
     },
     {
-      title: "Notes",
+      title: t.transfers.receive.notesCol,
       width: 180,
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
         return (
           <Input
-            placeholder="Receipt notes..."
+            placeholder={t.transfers.receive.notesPlaceholder}
             value={input?.notes}
             onChange={(e) => updateLine(record.id, "notes", e.target.value)}
             size="small"
@@ -206,7 +206,7 @@ export default function ReceiveTransferPage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/transfers/receive")}
       >
-        Back to Queue
+        {t.transfers.receive.backToQueue}
       </Button>
 
       <Steps
@@ -214,23 +214,23 @@ export default function ReceiveTransferPage() {
         size="small"
         items={[
           {
-            title: "Created",
+            title: t.transfers.receive.steps.created,
             description: `${transfer.createdBy.fullName} · ${dayjs(transfer.createdAt).format("DD MMM HH:mm")}`,
           },
           {
-            title: "Approved",
+            title: t.transfers.receive.steps.approved,
             description: transfer.approvedBy
               ? `${transfer.approvedBy.fullName} · ${dayjs(transfer.approvedAt).format("DD MMM HH:mm")}`
               : undefined,
           },
           {
-            title: "Shipped",
+            title: t.transfers.receive.steps.shipped,
             description: transfer.fulfilledBy
               ? `${transfer.fulfilledBy.fullName} · ${dayjs(transfer.fulfilledAt).format("DD MMM HH:mm")}`
               : undefined,
           },
           {
-            title: "Received",
+            title: t.transfers.receive.steps.received,
             status: transfer.status === "IN_TRANSIT" ? "process" : undefined,
             description: transfer.receivedBy
               ? `${transfer.receivedBy.fullName} · ${dayjs(transfer.receivedAt).format("DD MMM HH:mm")}`
@@ -240,20 +240,20 @@ export default function ReceiveTransferPage() {
       />
 
       <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Transfer #">
+        <Descriptions.Item label={t.transfers.columns.transferNumber}>
           {transfer.transferNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="Status">{transfer.status}</Descriptions.Item>
-        <Descriptions.Item label="From">
+        <Descriptions.Item label={t.transfers.columns.status}>{transfer.status}</Descriptions.Item>
+        <Descriptions.Item label={t.transfers.columns.from}>
           {transfer.fromLocation.code} - {transfer.fromLocation.name}
         </Descriptions.Item>
-        <Descriptions.Item label="To">
+        <Descriptions.Item label={t.transfers.columns.to}>
           {transfer.toLocation.code} - {transfer.toLocation.name}
         </Descriptions.Item>
       </Descriptions>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">Verify Received Items</h3>
+        <h3 className="text-base font-semibold mb-2">{t.transfers.receive.verifyReceivedItems}</h3>
         <Table
           rowKey="id"
           columns={columns}
@@ -265,11 +265,11 @@ export default function ReceiveTransferPage() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Receipt Notes
+          {t.transfers.receive.receiptNotes}
         </label>
         <Input.TextArea
           rows={2}
-          placeholder="Delivery condition, discrepancies..."
+          placeholder={t.transfers.receive.receiptNotesPlaceholder}
           value={receiveNotes}
           onChange={(e) => setReceiveNotes(e.target.value)}
         />
@@ -283,7 +283,7 @@ export default function ReceiveTransferPage() {
           onClick={handleSubmit}
           loading={submitting}
         >
-          Confirm Receipt
+          {t.transfers.receive.confirmReceipt}
         </Button>
       </div>
     </div>

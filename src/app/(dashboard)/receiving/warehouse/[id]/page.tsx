@@ -20,6 +20,7 @@ import {
 import { useRouter, useParams } from "next/navigation";
 import { useUserStore } from "@/store/user";
 import { ReceivingSteps } from "@/components/receiving/receiving-steps";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface ReceivingLine {
@@ -68,6 +69,7 @@ export default function WarehouseReceivePage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const user = useUserStore((s) => s.user);
+  const { t } = useTranslation();
   const [receiving, setReceiving] = useState<ReceivingDetail | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,13 +90,13 @@ export default function WarehouseReceivePage() {
     if (rcvJson.success) {
       setReceiving(rcvJson.data);
     } else {
-      message.error("Failed to load receiving record");
+      message.error(t.receiving.warehouse.failedToLoad);
     }
     if (locJson.success) {
       setLocations(locJson.data.data || []);
     }
     setLoading(false);
-  }, [id, message]);
+  }, [id, message, t]);
 
   useEffect(() => {
     fetchData();
@@ -103,7 +105,7 @@ export default function WarehouseReceivePage() {
   const handleSubmit = async () => {
     if (!receiving) return;
     if (!locationId) {
-      message.error("Please select a storage location");
+      message.error(t.receiving.warehouse.selectStorageLocation);
       return;
     }
 
@@ -127,11 +129,13 @@ export default function WarehouseReceivePage() {
       const locName =
         locations.find((l) => l.id === locationId)?.name || "storage";
       message.success(
-        `Inventory updated! ${totalAccepted} items added to ${locName}`
+        t.receiving.warehouse.inventoryUpdated
+          .replace("{count}", String(totalAccepted))
+          .replace("{location}", locName)
       );
       router.push("/receiving/warehouse");
     } else {
-      message.error(json.error || "Failed to confirm receipt");
+      message.error(json.error || t.receiving.warehouse.failedToPutaway);
     }
     setSubmitting(false);
   };
@@ -145,7 +149,7 @@ export default function WarehouseReceivePage() {
   }
 
   if (!receiving) {
-    return <Alert type="error" message="Receiving record not found" showIcon />;
+    return <Alert type="error" message={t.receiving.warehouse.receivingNotFound} showIcon />;
   }
 
   const isSameAsProcUser = receiving.procVerifiedBy?.id === user?.id;
@@ -155,17 +159,17 @@ export default function WarehouseReceivePage() {
   const acceptedLines = receiving.lines.filter((l) => l.acceptedQty > 0);
 
   const columns: ColumnsType<ReceivingLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70, align: "center" },
+    { title: t.receiving.warehouse.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.receiving.warehouse.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.receiving.warehouse.uom, dataIndex: ["item", "uom"], width: 70, align: "center" },
     {
-      title: "Received",
+      title: t.receiving.warehouse.received,
       dataIndex: "receivedQty",
       width: 100,
       align: "right",
     },
     {
-      title: "Accepted",
+      title: t.receiving.warehouse.accepted,
       dataIndex: "acceptedQty",
       width: 100,
       align: "right",
@@ -174,7 +178,7 @@ export default function WarehouseReceivePage() {
       ),
     },
     {
-      title: "Rejected",
+      title: t.receiving.warehouse.rejected,
       dataIndex: "rejectedQty",
       width: 100,
       align: "right",
@@ -182,7 +186,7 @@ export default function WarehouseReceivePage() {
         v > 0 ? <span className="text-red-600">{v}</span> : "-",
     },
     {
-      title: "Unit Cost",
+      title: t.receiving.warehouse.unitCost,
       dataIndex: "unitCost",
       width: 100,
       align: "right",
@@ -197,17 +201,17 @@ export default function WarehouseReceivePage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/receiving/warehouse")}
       >
-        Back to Queue
+        {t.receiving.warehouse.backToQueue}
       </Button>
 
       {isBlocked && (
         <Alert
           type="warning"
-          message="Segregation of Duties"
+          message={t.receiving.warehouse.segregationOfDuties}
           description={
             isSameAsProcUser
-              ? "You cannot receive items that you verified."
-              : "You cannot receive items that you inspected."
+              ? t.receiving.warehouse.segregationVerified
+              : t.receiving.warehouse.segregationInspected
           }
           showIcon
         />
@@ -225,16 +229,16 @@ export default function WarehouseReceivePage() {
       />
 
       <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Receiving #">
+        <Descriptions.Item label={t.receiving.warehouse.columns.grn}>
           {receiving.receivingNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="PO #">
+        <Descriptions.Item label={t.receiving.warehouse.columns.poNumber}>
           {receiving.purchaseOrder.poNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="Supplier">
+        <Descriptions.Item label={t.receiving.warehouse.columns.supplier}>
           {receiving.purchaseOrder.supplier.name}
         </Descriptions.Item>
-        <Descriptions.Item label="QC Result">
+        <Descriptions.Item label={t.receiving.warehouse.qcResult}>
           {receiving.qcResult && (
             <Tag
               color={
@@ -250,12 +254,12 @@ export default function WarehouseReceivePage() {
           )}
         </Descriptions.Item>
         {receiving.procNotes && (
-          <Descriptions.Item label="Procurement Notes" span={2}>
+          <Descriptions.Item label={t.receiving.warehouse.procurementNotes} span={2}>
             {receiving.procNotes}
           </Descriptions.Item>
         )}
         {receiving.qcNotes && (
-          <Descriptions.Item label="QC Notes" span={2}>
+          <Descriptions.Item label={t.receiving.warehouse.qcNotes} span={2}>
             {receiving.qcNotes}
           </Descriptions.Item>
         )}
@@ -263,7 +267,7 @@ export default function WarehouseReceivePage() {
 
       <div>
         <h3 className="text-base font-semibold mb-2">
-          Accepted Items ({acceptedLines.length})
+          {t.receiving.warehouse.acceptedItems} ({acceptedLines.length})
         </h3>
         <Table
           rowKey="id"
@@ -277,10 +281,10 @@ export default function WarehouseReceivePage() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Storage Location *
+            {t.receiving.warehouse.storageLocation}
           </label>
           <Select
-            placeholder="Select location..."
+            placeholder={t.receiving.warehouse.selectLocation}
             value={locationId || undefined}
             onChange={setLocationId}
             disabled={isBlocked}
@@ -295,10 +299,10 @@ export default function WarehouseReceivePage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Batch/Lot Number (optional)
+            {t.receiving.warehouse.batchNumber}
           </label>
           <Input
-            placeholder="e.g. BATCH-2026-001"
+            placeholder={t.receiving.warehouse.batchPlaceholder}
             value={batchNumber}
             onChange={(e) => setBatchNumber(e.target.value)}
             disabled={isBlocked}
@@ -308,11 +312,11 @@ export default function WarehouseReceivePage() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Warehouse Notes
+          {t.receiving.warehouse.warehouseNotes}
         </label>
         <Input.TextArea
           rows={3}
-          placeholder="Warehouse receiving notes..."
+          placeholder={t.receiving.warehouse.warehouseNotesPlaceholder}
           value={warehouseNotes}
           onChange={(e) => setWarehouseNotes(e.target.value)}
           disabled={isBlocked}
@@ -321,10 +325,10 @@ export default function WarehouseReceivePage() {
 
       <div className="flex justify-end">
         <Popconfirm
-          title="Confirm warehouse receipt?"
-          description="This will add accepted items to inventory. This action cannot be undone."
+          title={t.receiving.warehouse.confirmTitle}
+          description={t.receiving.warehouse.confirmDescription}
           onConfirm={handleSubmit}
-          okText="Confirm Receipt"
+          okText={t.receiving.warehouse.confirmReceiptBtn}
           disabled={isBlocked || !locationId}
         >
           <Button
@@ -334,7 +338,7 @@ export default function WarehouseReceivePage() {
             loading={submitting}
             disabled={isBlocked || !locationId}
           >
-            Confirm Receipt
+            {t.receiving.warehouse.confirmReceiptBtn}
           </Button>
         </Popconfirm>
       </div>

@@ -20,6 +20,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface InventoryItem {
@@ -63,6 +64,7 @@ export default function StoreOrderPage() {
   const { message } = App.useApp();
   const router = useRouter();
   const hasPermission = useUserStore((s) => s.hasPermission);
+  const { t } = useTranslation();
   const [locations, setLocations] = useState<Location[]>([]);
   const [storeLocationId, setStoreLocationId] = useState<string>("");
   const [warehouseLocationId, setWarehouseLocationId] = useState<string>("");
@@ -76,12 +78,12 @@ export default function StoreOrderPage() {
       const res = await fetch("/api/locations?pageSize=100");
       const json = await res.json();
       if (json.success) setLocations(json.data.data || []);
-      else message.error("Failed to load locations");
+      else message.error(t.store.failedToLoad);
     } catch {
-      message.error("Network error loading locations");
+      message.error(t.store.networkErrorLoad);
     }
     setLoading(false);
-  }, [message]);
+  }, [message, t]);
 
   useEffect(() => {
     fetchLocations();
@@ -97,12 +99,12 @@ export default function StoreOrderPage() {
       if (json.success) {
         setInventory(json.data.data || []);
       } else {
-        message.error("Failed to load inventory");
+        message.error(t.store.failedToLoadInventory);
       }
     } catch {
-      message.error("Network error loading inventory");
+      message.error(t.store.networkErrorInventory);
     }
-  }, [storeLocationId, message]);
+  }, [storeLocationId, message, t]);
 
   useEffect(() => {
     fetchStoreInventory();
@@ -134,9 +136,9 @@ export default function StoreOrderPage() {
       });
     setOrderLines(suggestions);
     if (suggestions.length === 0) {
-      message.info("All items are above reorder point - no replenishment needed!");
+      message.info(t.store.noItemsBelowReorder);
     } else {
-      message.success(`${suggestions.length} items need replenishment`);
+      message.success(`${suggestions.length} ${t.store.ordersGenerated}`);
     }
   };
 
@@ -152,11 +154,11 @@ export default function StoreOrderPage() {
 
   const handleSubmit = async () => {
     if (!warehouseLocationId) {
-      message.error("Select the source warehouse");
+      message.error(t.store.selectSourceWarehouse);
       return;
     }
     if (orderLines.length === 0) {
-      message.error("No items to order");
+      message.error(t.store.noItemsToOrder);
       return;
     }
 
@@ -172,27 +174,27 @@ export default function StoreOrderPage() {
             itemId: l.itemId,
             quantity: l.orderQty,
           })),
-          notes: `Store replenishment order from smart ordering`,
+          notes: t.store.storeReplenishmentNote,
         }),
       });
 
       const json = await res.json();
       if (json.success) {
         message.success(
-          `Transfer ${json.data.transferNumber} created! ${json.data.status === "PENDING" ? "Awaiting approval." : "Ready for fulfillment."}`
+          `${t.store.transferCreated} ${json.data.transferNumber} ${json.data.status === "PENDING" ? t.store.awaitingApproval : t.store.readyForFulfillment}`
         );
         router.push("/transfers/fulfill");
       } else {
-        message.error(json.error || "Failed to create transfer");
+        message.error(json.error || t.store.failedToCreateTransfer);
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setSubmitting(false);
   };
 
   if (!hasPermission("transfers:write")) {
-    return <Empty description="You don't have permission for store ordering" />;
+    return <Empty description={t.store.noPermission} />;
   }
 
   const lowStockCount = inventory.filter(
@@ -201,11 +203,11 @@ export default function StoreOrderPage() {
   const outOfStockCount = inventory.filter((inv) => inv.quantity <= 0).length;
 
   const columns: ColumnsType<OrderLine> = [
-    { title: "Code", dataIndex: "itemCode", width: 100 },
-    { title: "Item", dataIndex: "itemName", ellipsis: true },
-    { title: "UOM", dataIndex: "uom", width: 60, align: "center" },
+    { title: t.store.code, dataIndex: "itemCode", width: 100 },
+    { title: t.store.item, dataIndex: "itemName", ellipsis: true },
+    { title: t.store.uom, dataIndex: "uom", width: 60, align: "center" },
     {
-      title: "Current",
+      title: t.store.current,
       dataIndex: "currentStock",
       width: 90,
       align: "right",
@@ -216,26 +218,26 @@ export default function StoreOrderPage() {
       ),
     },
     {
-      title: "Min",
+      title: t.store.min,
       dataIndex: "minStock",
       width: 70,
       align: "right",
     },
     {
-      title: "Max",
+      title: t.store.max,
       dataIndex: "maxStock",
       width: 70,
       align: "right",
     },
     {
-      title: "Suggested",
+      title: t.store.suggested,
       dataIndex: "suggestedQty",
       width: 90,
       align: "right",
       render: (v: number) => <Tag color="blue">{v}</Tag>,
     },
     {
-      title: "Order Qty",
+      title: t.store.columns.orderQty,
       width: 110,
       render: (_, record) => (
         <InputNumber
@@ -257,7 +259,7 @@ export default function StoreOrderPage() {
           size="small"
           onClick={() => removeOrderLine(record.itemId)}
         >
-          Remove
+          {t.common.remove}
         </Button>
       ),
     },
@@ -267,7 +269,7 @@ export default function StoreOrderPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">
-          Smart Store Ordering
+          {t.store.title}
         </h1>
       </div>
 
@@ -275,10 +277,10 @@ export default function StoreOrderPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Store Location *
+              {t.store.storeLocation} *
             </label>
             <Select
-              placeholder="Select your store..."
+              placeholder={t.store.selectStore}
               value={storeLocationId || undefined}
               onChange={setStoreLocationId}
               className="w-full"
@@ -294,10 +296,10 @@ export default function StoreOrderPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Source Warehouse *
+              {t.store.sourceWarehouse} *
             </label>
             <Select
-              placeholder="Order from warehouse..."
+              placeholder={t.store.orderFromWarehouse}
               value={warehouseLocationId || undefined}
               onChange={setWarehouseLocationId}
               className="w-full"
@@ -322,21 +324,21 @@ export default function StoreOrderPage() {
             <div className="grid grid-cols-3 gap-4">
               <Card size="small">
                 <Statistic
-                  title="Total Items"
+                  title={t.store.totalItems}
                   value={inventory.length}
                   prefix={<ShoppingCartOutlined />}
                 />
               </Card>
               <Card size="small">
                 <Statistic
-                  title="Low Stock"
+                  title={t.store.lowStock}
                   value={lowStockCount}
                   styles={{ content: { color: lowStockCount > 0 ? "#faad14" : "#52c41a" } }}
                 />
               </Card>
               <Card size="small">
                 <Statistic
-                  title="Out of Stock"
+                  title={t.store.outOfStock}
                   value={outOfStockCount}
                   styles={{ content: { color: outOfStockCount > 0 ? "#ff4d4f" : "#52c41a" } }}
                 />
@@ -350,25 +352,25 @@ export default function StoreOrderPage() {
                 icon={<ThunderboltOutlined />}
                 onClick={generateSuggestions}
               >
-                Generate Replenishment Suggestions
+                {t.store.generateOrders}
               </Button>
             </div>
           </>
         )}
 
         {storeLocationId && inventory.length === 0 && (
-          <Empty description="No inventory found at this location" />
+          <Empty description={t.store.noInventoryAtLocation} />
         )}
 
         {orderLines.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-3">
-              Replenishment Order ({orderLines.length} items)
+              {t.store.replenishmentOrder} ({orderLines.length} {t.common.items})
             </h2>
 
             <Alert
               type="info"
-              message="Review suggested quantities below. Adjust as needed, then submit to create a transfer from warehouse."
+              message={t.store.reviewSuggestions}
               className="mb-3"
               showIcon
             />
@@ -390,7 +392,7 @@ export default function StoreOrderPage() {
                 loading={submitting}
                 disabled={!warehouseLocationId}
               >
-                Submit Order (Create Transfer)
+                {t.store.submitOrder}
               </Button>
             </div>
           </div>

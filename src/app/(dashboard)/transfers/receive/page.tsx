@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Table, Button, Tag, App, Empty } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -21,6 +22,7 @@ interface TransferRecord {
 
 export default function ReceiveTransfersPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const router = useRouter();
   const [transfers, setTransfers] = useState<TransferRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ export default function ReceiveTransfersPage() {
     if (json.success) {
       setTransfers(json.data.data || []);
     } else {
-      message.error("Failed to load transfers");
+      message.error(t.transfers.receive.failedToLoad);
     }
     setLoading(false);
   }, [message]);
@@ -42,36 +44,36 @@ export default function ReceiveTransfersPage() {
   }, [fetchTransfers]);
 
   const columns: ColumnsType<TransferRecord> = [
-    { title: "Transfer #", dataIndex: "transferNumber", width: 130 },
+    { title: t.transfers.columns.transferNumber, dataIndex: "transferNumber", width: 130 },
     {
-      title: "From",
+      title: t.transfers.columns.from,
       dataIndex: ["fromLocation", "name"],
       ellipsis: true,
     },
     {
-      title: "To",
+      title: t.transfers.columns.to,
       dataIndex: ["toLocation", "name"],
       ellipsis: true,
     },
     {
-      title: "Status",
+      title: t.transfers.columns.status,
       dataIndex: "status",
       width: 110,
-      render: () => <Tag color="blue">In Transit</Tag>,
+      render: () => <Tag color="blue">{t.transfers.statusLabels.IN_TRANSIT}</Tag>,
     },
     {
-      title: "Shipped By",
+      title: t.transfers.receive.shippedBy,
       dataIndex: ["fulfilledBy", "fullName"],
       width: 140,
     },
     {
-      title: "Items",
+      title: t.transfers.columns.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
     },
     {
-      title: "Created",
+      title: t.transfers.columns.createdAt,
       dataIndex: "createdAt",
       width: 140,
       render: (v: string) => dayjs(v).format("DD MMM YYYY HH:mm"),
@@ -86,14 +88,14 @@ export default function ReceiveTransfersPage() {
           icon={<InboxOutlined />}
           onClick={() => router.push(`/transfers/receive/${record.id}`)}
         >
-          Receive
+          {t.transfers.receive.receiveTransfer}
         </Button>
       ),
     },
   ];
 
   if (transfers.length === 0 && !loading) {
-    return <Empty description="No in-transit transfers to receive" />;
+    return <Empty description={t.transfers.receive.noInTransitTransfers} />;
   }
 
   return (

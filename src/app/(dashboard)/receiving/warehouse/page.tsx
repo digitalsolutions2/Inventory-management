@@ -5,6 +5,7 @@ import { Table, Button, Tag, App, Empty } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { ReceivingStatusTag } from "@/components/receiving/receiving-status-tag";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -33,6 +34,7 @@ const QC_RESULT_COLORS: Record<string, string> = {
 export default function WarehouseQueuePage() {
   const { message } = App.useApp();
   const router = useRouter();
+  const { t } = useTranslation();
   const [receivings, setReceivings] = useState<ReceivingRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,54 +45,54 @@ export default function WarehouseQueuePage() {
     if (json.success) {
       setReceivings(json.data.data || []);
     } else {
-      message.error("Failed to load receiving records");
+      message.error(t.receiving.qc.failedToLoad);
     }
     setLoading(false);
-  }, [message]);
+  }, [message, t]);
 
   useEffect(() => {
     fetchReceivings();
   }, [fetchReceivings]);
 
   const columns: ColumnsType<ReceivingRecord> = [
-    { title: "Receiving #", dataIndex: "receivingNumber", width: 170 },
+    { title: t.receiving.warehouse.columns.grn, dataIndex: "receivingNumber", width: 170 },
     {
-      title: "PO #",
+      title: t.receiving.warehouse.columns.poNumber,
       dataIndex: ["purchaseOrder", "poNumber"],
       width: 130,
     },
     {
-      title: "Supplier",
+      title: t.receiving.warehouse.columns.supplier,
       dataIndex: ["purchaseOrder", "supplier", "name"],
       ellipsis: true,
     },
     {
-      title: "Status",
+      title: t.receiving.warehouse.columns.status,
       dataIndex: "status",
       width: 170,
       render: (status: string) => <ReceivingStatusTag status={status} />,
     },
     {
-      title: "QC Result",
+      title: t.receiving.warehouse.qcResult,
       dataIndex: "qcResult",
       width: 120,
       render: (v: string | null) =>
         v ? <Tag color={QC_RESULT_COLORS[v]}>{v}</Tag> : "-",
     },
     {
-      title: "QC By",
+      title: t.receiving.warehouse.qcBy,
       dataIndex: ["qcInspectedBy", "fullName"],
       width: 140,
     },
     {
-      title: "QC At",
+      title: t.receiving.warehouse.columns.qcDate,
       dataIndex: "qcInspectedAt",
       width: 150,
       render: (v: string | null) =>
         v ? dayjs(v).format("DD MMM YYYY HH:mm") : "-",
     },
     {
-      title: "Items",
+      title: t.receiving.warehouse.columns.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
@@ -105,7 +107,7 @@ export default function WarehouseQueuePage() {
           icon={<InboxOutlined />}
           onClick={() => router.push(`/receiving/warehouse/${record.id}`)}
         >
-          Receive
+          {t.receiving.warehouse.putaway}
         </Button>
       ),
     },
@@ -113,7 +115,7 @@ export default function WarehouseQueuePage() {
 
   if (receivings.length === 0 && !loading) {
     return (
-      <Empty description="No receiving records pending warehouse receipt" />
+      <Empty description={t.receiving.warehouse.pendingPutaway} />
     );
   }
 

@@ -17,6 +17,7 @@ import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
 import { useUserStore } from "@/store/user";
 import { ReceivingSteps } from "@/components/receiving/receiving-steps";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface ReceivingLine {
@@ -64,6 +65,7 @@ export default function QCInspectPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const user = useUserStore((s) => s.user);
+  const { t } = useTranslation();
   const [receiving, setReceiving] = useState<ReceivingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -86,10 +88,10 @@ export default function QCInspectPage() {
         }))
       );
     } else {
-      message.error("Failed to load receiving record");
+      message.error(t.receiving.qc.failedToLoad);
     }
     setLoading(false);
-  }, [id, message]);
+  }, [id, message, t]);
 
   useEffect(() => {
     fetchReceiving();
@@ -125,12 +127,12 @@ export default function QCInspectPage() {
     if (json.success) {
       message.success(
         qcResult === "REJECTED"
-          ? "QC inspection submitted - items rejected"
-          : "QC inspection submitted successfully!"
+          ? t.receiving.qc.rejectionSubmitted
+          : t.receiving.qc.inspectionSubmitted
       );
       router.push("/receiving/qc");
     } else {
-      message.error(json.error || "Failed to submit inspection");
+      message.error(json.error || t.receiving.qc.failedToSubmit);
     }
     setSubmitting(false);
   };
@@ -185,29 +187,29 @@ export default function QCInspectPage() {
   }
 
   if (!receiving) {
-    return <Alert type="error" message="Receiving record not found" showIcon />;
+    return <Alert type="error" message={t.receiving.qc.receivingNotFound} showIcon />;
   }
 
   const isSameUser = receiving.procVerifiedBy?.id === user?.id;
 
   const columns: ColumnsType<ReceivingLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70, align: "center" },
+    { title: t.procurement.columns.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.procurement.columns.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.procurement.columns.uom, dataIndex: ["item", "uom"], width: 70, align: "center" },
     {
-      title: "Expected",
+      title: t.receiving.qc.expected,
       dataIndex: "expectedQty",
       width: 100,
       align: "right",
     },
     {
-      title: "Received",
+      title: t.receiving.qc.received,
       dataIndex: "receivedQty",
       width: 100,
       align: "right",
     },
     {
-      title: "Accepted Qty",
+      title: t.receiving.qc.acceptedQty,
       width: 120,
       render: (_, __, index) => (
         <InputNumber
@@ -222,7 +224,7 @@ export default function QCInspectPage() {
       ),
     },
     {
-      title: "Rejected Qty",
+      title: t.receiving.qc.rejectedQty,
       width: 120,
       render: (_, __, index) => (
         <InputNumber
@@ -237,11 +239,11 @@ export default function QCInspectPage() {
       ),
     },
     {
-      title: "Notes",
+      title: t.common.notes,
       width: 180,
       render: (_, __, index) => (
         <Input
-          placeholder="Inspection notes..."
+          placeholder={t.receiving.qc.inspectionLineNotesPlaceholder}
           value={lineInputs[index]?.notes}
           onChange={(e) => updateLineInput(index, "notes", e.target.value)}
           disabled={isSameUser}
@@ -258,14 +260,14 @@ export default function QCInspectPage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/receiving/qc")}
       >
-        Back to Queue
+        {t.common.back}
       </Button>
 
       {isSameUser && (
         <Alert
           type="warning"
-          message="Segregation of Duties"
-          description="You cannot inspect a receiving that you verified. A different QC user must inspect this."
+          message={t.receiving.qc.segregationOfDuties}
+          description={t.receiving.qc.segregationDescription}
           showIcon
         />
       )}
@@ -282,40 +284,40 @@ export default function QCInspectPage() {
       />
 
       <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Receiving #">
+        <Descriptions.Item label={t.receiving.qc.columns.grn}>
           {receiving.receivingNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="PO #">
+        <Descriptions.Item label={t.receiving.qc.columns.poNumber}>
           {receiving.purchaseOrder.poNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="Supplier">
+        <Descriptions.Item label={t.receiving.qc.columns.supplier}>
           {receiving.purchaseOrder.supplier.name}
         </Descriptions.Item>
-        <Descriptions.Item label="Verified By">
+        <Descriptions.Item label={t.receiving.procurement.verifiedBy}>
           {receiving.procVerifiedBy?.fullName || "-"}
         </Descriptions.Item>
         {receiving.procNotes && (
-          <Descriptions.Item label="Procurement Notes" span={2}>
+          <Descriptions.Item label={t.receiving.procurement.procurementNotes} span={2}>
             {receiving.procNotes}
           </Descriptions.Item>
         )}
       </Descriptions>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">QC Result</h3>
+        <h3 className="text-base font-semibold mb-2">{t.receiving.qc.qcResult}</h3>
         <Radio.Group
           value={qcResult}
           onChange={(e) => handleQcResultChange(e.target.value)}
           disabled={isSameUser}
         >
-          <Radio.Button value="ACCEPTED">Accept All</Radio.Button>
-          <Radio.Button value="PARTIAL">Partial Accept</Radio.Button>
-          <Radio.Button value="REJECTED">Reject All</Radio.Button>
+          <Radio.Button value="ACCEPTED">{t.receiving.qc.passAll}</Radio.Button>
+          <Radio.Button value="PARTIAL">{t.receiving.qc.passItem}</Radio.Button>
+          <Radio.Button value="REJECTED">{t.receiving.qc.failItem}</Radio.Button>
         </Radio.Group>
       </div>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">Line Items</h3>
+        <h3 className="text-base font-semibold mb-2">{t.receiving.qc.lineItems}</h3>
         <Table
           rowKey="id"
           columns={columns}
@@ -327,11 +329,11 @@ export default function QCInspectPage() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          QC Notes
+          {t.receiving.qc.inspectionNotes}
         </label>
         <Input.TextArea
           rows={3}
-          placeholder="Quality control notes..."
+          placeholder={t.receiving.qc.notesPlaceholder}
           value={qcNotes}
           onChange={(e) => setQcNotes(e.target.value)}
           disabled={isSameUser}
@@ -340,13 +342,13 @@ export default function QCInspectPage() {
 
       <div className="flex justify-end">
         <Popconfirm
-          title={qcResult === "REJECTED" ? "Reject this receiving?" : "Submit QC inspection?"}
+          title={qcResult === "REJECTED" ? t.receiving.qc.rejectConfirm : t.receiving.qc.submitConfirm}
           description={qcResult === "REJECTED"
-            ? "Rejected items will not enter inventory."
-            : "This will advance the receiving to warehouse receipt."
+            ? t.receiving.qc.rejectConfirmDesc
+            : t.receiving.qc.submitConfirmDesc
           }
           onConfirm={handleSubmit}
-          okText="Submit"
+          okText={t.common.submit}
           okButtonProps={{ danger: qcResult === "REJECTED" }}
           disabled={isSameUser}
         >
@@ -359,8 +361,8 @@ export default function QCInspectPage() {
             danger={qcResult === "REJECTED"}
           >
             {qcResult === "REJECTED"
-              ? "Submit Rejection"
-              : "Submit Inspection"}
+              ? t.receiving.qc.submitRejection
+              : t.receiving.qc.submitInspection}
           </Button>
         </Popconfirm>
       </div>

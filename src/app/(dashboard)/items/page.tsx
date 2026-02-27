@@ -5,6 +5,7 @@ import { Table, Button, Input, Select, Tag, Space, Popconfirm, App } from "antd"
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { ItemFormModal } from "@/components/items/item-form-modal";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface Item {
@@ -29,6 +30,7 @@ interface Category {
 
 export default function ItemsPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const hasPermission = useUserStore((s) => s.hasPermission);
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -86,12 +88,12 @@ export default function ItemsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        message.success(editingItem ? "Item updated" : "Item created");
+        message.success(editingItem ? t.items.itemUpdated : t.items.itemCreated);
         setModalOpen(false);
         setEditingItem(null);
         fetchItems();
       } else {
-        message.error(json.error || "Failed");
+        message.error(json.error || t.common.failed);
       }
     } finally {
       setSubmitting(false);
@@ -102,42 +104,42 @@ export default function ItemsPage() {
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
-      message.success("Item deactivated");
+      message.success(t.items.itemDeactivated);
       fetchItems();
     } else {
-      message.error(json.error || "Failed");
+      message.error(json.error || t.common.failed);
     }
   };
 
   const columns: ColumnsType<Item> = [
-    { title: "Code", dataIndex: "code", width: 120 },
-    { title: "Name", dataIndex: "name", ellipsis: true },
+    { title: t.items.columns.code, dataIndex: "code", width: 120 },
+    { title: t.items.columns.name, dataIndex: "name", ellipsis: true },
     {
-      title: "Category",
+      title: t.items.columns.category,
       dataIndex: ["category", "name"],
       width: 150,
       render: (val: string) => val || "-",
     },
-    { title: "UOM", dataIndex: "uom", width: 80 },
-    { title: "Min Stock", dataIndex: "minStock", width: 100, align: "right" },
-    { title: "Reorder Pt", dataIndex: "reorderPoint", width: 100, align: "right" },
+    { title: t.items.columns.uom, dataIndex: "uom", width: 80 },
+    { title: t.items.columns.minStock, dataIndex: "minStock", width: 100, align: "right" },
+    { title: t.items.columns.reorderPt, dataIndex: "reorderPoint", width: 100, align: "right" },
     {
-      title: "Avg Cost",
+      title: t.items.columns.avgCost,
       dataIndex: "avgCost",
       width: 110,
       align: "right",
       render: (v: number) => v.toFixed(2),
     },
     {
-      title: "Status",
+      title: t.items.columns.status,
       dataIndex: "isActive",
       width: 90,
       render: (active: boolean) => (
-        <Tag color={active ? "green" : "red"}>{active ? "Active" : "Inactive"}</Tag>
+        <Tag color={active ? "green" : "red"}>{active ? t.common.active : t.common.inactive}</Tag>
       ),
     },
     {
-      title: "Actions",
+      title: t.items.columns.actions,
       width: 100,
       render: (_, record) => (
         <Space size="small">
@@ -154,7 +156,7 @@ export default function ItemsPage() {
           )}
           {hasPermission("item:delete") && (
             <Popconfirm
-              title="Deactivate this item?"
+              title={t.items.deactivateConfirm}
               onConfirm={() => handleDelete(record.id)}
             >
               <Button type="text" size="small" danger icon={<DeleteOutlined />} />
@@ -168,7 +170,7 @@ export default function ItemsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Items</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.items.title}</h1>
         {hasPermission("item:create") && (
           <Button
             type="primary"
@@ -178,7 +180,7 @@ export default function ItemsPage() {
               setModalOpen(true);
             }}
           >
-            Add Item
+            {t.items.addItem}
           </Button>
         )}
       </div>
@@ -186,7 +188,7 @@ export default function ItemsPage() {
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b flex gap-3">
           <Input
-            placeholder="Search items..."
+            placeholder={t.items.searchPlaceholder}
             prefix={<SearchOutlined />}
             value={search}
             onChange={(e) => {
@@ -197,7 +199,7 @@ export default function ItemsPage() {
             allowClear
           />
           <Select
-            placeholder="All Categories"
+            placeholder={t.items.allCategories}
             value={categoryFilter || undefined}
             onChange={(v) => {
               setCategoryFilter(v || "");
@@ -223,7 +225,7 @@ export default function ItemsPage() {
             pageSize,
             total,
             showSizeChanger: true,
-            showTotal: (t) => `${t} items`,
+            showTotal: (total) => `${total} ${t.common.items}`,
             onChange: (p, ps) => {
               setPage(p);
               setPageSize(ps);

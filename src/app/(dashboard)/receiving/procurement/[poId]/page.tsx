@@ -15,6 +15,7 @@ import {
 import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -58,6 +59,7 @@ export default function ProcurementVerifyPage() {
   const router = useRouter();
   const { poId } = useParams<{ poId: string }>();
   const user = useUserStore((s) => s.user);
+  const { t } = useTranslation();
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -78,10 +80,10 @@ export default function ProcurementVerifyPage() {
         }))
       );
     } else {
-      message.error("Failed to load purchase order");
+      message.error(t.procurement.failedToLoad);
     }
     setLoading(false);
-  }, [poId, message]);
+  }, [poId, message, t]);
 
   useEffect(() => {
     fetchPO();
@@ -103,10 +105,10 @@ export default function ProcurementVerifyPage() {
 
     const json = await res.json();
     if (json.success) {
-      message.success("Procurement verification submitted successfully!");
+      message.success(t.receiving.procurement.received);
       router.push("/receiving/procurement");
     } else {
-      message.error(json.error || "Failed to submit verification");
+      message.error(json.error || t.receiving.procurement.failedToReceive);
     }
     setSubmitting(false);
   };
@@ -128,43 +130,43 @@ export default function ProcurementVerifyPage() {
   }
 
   if (!po) {
-    return <Alert type="error" message="Purchase order not found" showIcon />;
+    return <Alert type="error" message={t.procurement.notFound} showIcon />;
   }
 
   const isSameUser = po.createdBy.id === user?.id;
 
   const columns: ColumnsType<POLine> = [
     {
-      title: "Item Code",
+      title: t.procurement.columns.itemCode,
       dataIndex: ["item", "code"],
       width: 120,
     },
     {
-      title: "Item Name",
+      title: t.procurement.columns.itemName,
       dataIndex: ["item", "name"],
       ellipsis: true,
     },
     {
-      title: "UOM",
+      title: t.procurement.columns.uom,
       dataIndex: ["item", "uom"],
       width: 70,
       align: "center",
     },
     {
-      title: "Ordered Qty",
+      title: t.receiving.procurement.pendingQty,
       dataIndex: "quantity",
       width: 110,
       align: "right",
     },
     {
-      title: "Already Received",
+      title: t.receiving.procurement.receivedQuantity,
       dataIndex: "receivedQty",
       width: 130,
       align: "right",
       render: (v: number) => (v > 0 ? v : "-"),
     },
     {
-      title: "Received Qty",
+      title: t.receiving.procurement.quantityToReceive,
       width: 130,
       render: (_, __, index) => (
         <InputNumber
@@ -179,13 +181,13 @@ export default function ProcurementVerifyPage() {
       ),
     },
     {
-      title: "Discrepancy",
+      title: t.receiving.procurement.discrepancy,
       width: 110,
       align: "right",
       render: (_, record, index) => {
         const diff =
           (lineInputs[index]?.receivedQty || 0) - record.quantity;
-        if (diff === 0) return <span className="text-green-600">Match</span>;
+        if (diff === 0) return <span className="text-green-600">{t.receiving.procurement.match}</span>;
         return (
           <span className={diff < 0 ? "text-red-600" : "text-orange-600"}>
             {diff > 0 ? "+" : ""}
@@ -195,11 +197,11 @@ export default function ProcurementVerifyPage() {
       },
     },
     {
-      title: "Notes",
+      title: t.common.notes,
       width: 180,
       render: (_, __, index) => (
         <Input
-          placeholder="Line notes..."
+          placeholder={t.receiving.procurement.lineNotesPlaceholder}
           value={lineInputs[index]?.notes}
           onChange={(e) => updateLineInput(index, "notes", e.target.value)}
           disabled={isSameUser}
@@ -216,14 +218,14 @@ export default function ProcurementVerifyPage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/receiving/procurement")}
       >
-        Back to Queue
+        {t.common.back}
       </Button>
 
       {isSameUser && (
         <Alert
           type="warning"
-          message="Segregation of Duties"
-          description="You cannot verify a PO that you created. A different procurement user must verify this PO."
+          message={t.receiving.procurement.segregationOfDuties}
+          description={t.receiving.procurement.segregationDescription}
           showIcon
         />
       )}
@@ -234,29 +236,29 @@ export default function ProcurementVerifyPage() {
         column={2}
         title={`PO: ${po.poNumber}`}
       >
-        <Descriptions.Item label="Supplier">{po.supplier.name}</Descriptions.Item>
-        <Descriptions.Item label="Status">{po.status}</Descriptions.Item>
-        <Descriptions.Item label="Total Amount">
+        <Descriptions.Item label={t.procurement.supplier}>{po.supplier.name}</Descriptions.Item>
+        <Descriptions.Item label={t.common.status}>{po.status}</Descriptions.Item>
+        <Descriptions.Item label={t.procurement.details.totalAmount}>
           {po.currency} {po.totalAmount.toFixed(2)}
         </Descriptions.Item>
-        <Descriptions.Item label="Expected Date">
+        <Descriptions.Item label={t.receiving.procurement.columns.expectedDate}>
           {po.expectedDate ? dayjs(po.expectedDate).format("DD MMM YYYY") : "-"}
         </Descriptions.Item>
-        <Descriptions.Item label="Created By">
+        <Descriptions.Item label={t.procurement.details.createdBy}>
           {po.createdBy.fullName}
         </Descriptions.Item>
-        <Descriptions.Item label="Created">
+        <Descriptions.Item label={t.procurement.details.created}>
           {dayjs(po.createdAt).format("DD MMM YYYY")}
         </Descriptions.Item>
         {po.notes && (
-          <Descriptions.Item label="PO Notes" span={2}>
+          <Descriptions.Item label={t.common.notes} span={2}>
             {po.notes}
           </Descriptions.Item>
         )}
       </Descriptions>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">Line Items</h3>
+        <h3 className="text-base font-semibold mb-2">{t.procurement.lineItems}</h3>
         <Table
           rowKey="id"
           columns={columns}
@@ -268,11 +270,11 @@ export default function ProcurementVerifyPage() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Procurement Notes
+          {t.receiving.procurement.procurementNotes}
         </label>
         <Input.TextArea
           rows={3}
-          placeholder="Notes about this verification..."
+          placeholder={t.receiving.procurement.notesPlaceholder}
           value={procNotes}
           onChange={(e) => setProcNotes(e.target.value)}
           disabled={isSameUser}
@@ -281,10 +283,10 @@ export default function ProcurementVerifyPage() {
 
       <div className="flex justify-end">
         <Popconfirm
-          title="Submit procurement verification?"
-          description="This will advance the receiving to QC inspection."
+          title={t.receiving.procurement.submitConfirm}
+          description={t.receiving.procurement.submitConfirmDesc}
           onConfirm={handleSubmit}
-          okText="Submit"
+          okText={t.common.submit}
           disabled={isSameUser || lineInputs.length === 0}
         >
           <Button
@@ -294,7 +296,7 @@ export default function ProcurementVerifyPage() {
             loading={submitting}
             disabled={isSameUser || lineInputs.length === 0}
           >
-            Submit Verification
+            {t.receiving.procurement.receiveItems}
           </Button>
         </Popconfirm>
       </div>

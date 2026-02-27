@@ -5,46 +5,51 @@ import { useRouter, usePathname } from "next/navigation";
 import { Breadcrumb } from "antd";
 import { HomeOutlined } from "@ant-design/icons";
 import { UserContext } from "@/types";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useTranslation } from "@/lib/i18n";
 
 interface HeaderProps {
   userContext: UserContext;
 }
 
-const BREADCRUMB_LABELS: Record<string, string> = {
-  dashboard: "Dashboard",
-  procurement: "Purchase Orders",
-  create: "Create",
-  receiving: "Receiving",
-  qc: "QC Inspection",
-  warehouse: "Warehouse",
-  items: "Items",
-  categories: "Categories",
-  locations: "Locations",
-  suppliers: "Suppliers",
-  transfers: "Transfers",
-  pending: "Pending Approval",
-  fulfill: "Fulfill",
-  receive: "Receive",
-  requests: "Internal Requests",
-  confirm: "Confirm",
-  reports: "Reports",
-  "inventory-valuation": "Inventory Valuation",
-  "purchase-summary": "Purchase Summary",
-  "payment-aging": "Payment Aging",
-  "transaction-history": "Transaction History",
-  "stock-movement": "Stock Movement",
-  "supplier-performance": "Supplier Performance",
-  finance: "Finance",
-  payments: "Payments",
-  valuation: "Valuation",
-  store: "Store",
-  order: "Smart Order",
-};
-
 export function Header({ userContext }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const { t } = useTranslation();
+
+  const BREADCRUMB_LABELS: Record<string, string> = {
+    dashboard: t.breadcrumbs.dashboard,
+    procurement: t.breadcrumbs.procurement,
+    create: t.breadcrumbs.create,
+    receiving: t.breadcrumbs.receiving,
+    qc: t.breadcrumbs.qc,
+    warehouse: t.breadcrumbs.warehouse,
+    items: t.breadcrumbs.items,
+    categories: t.breadcrumbs.categories,
+    locations: t.breadcrumbs.locations,
+    suppliers: t.breadcrumbs.suppliers,
+    transfers: t.breadcrumbs.transfers,
+    pending: t.breadcrumbs.pending,
+    fulfill: t.breadcrumbs.fulfill,
+    receive: t.breadcrumbs.receive,
+    requests: t.breadcrumbs.requests,
+    confirm: t.breadcrumbs.confirm,
+    reports: t.breadcrumbs.reports,
+    "inventory-valuation": t.breadcrumbs.inventoryValuation,
+    "purchase-summary": t.breadcrumbs.purchaseSummary,
+    "payment-aging": t.breadcrumbs.paymentAging,
+    "transaction-history": t.breadcrumbs.transactionHistory,
+    "stock-movement": t.breadcrumbs.stockMovement,
+    "supplier-performance": t.breadcrumbs.supplierPerformance,
+    finance: t.breadcrumbs.finance,
+    payments: t.breadcrumbs.payments,
+    valuation: t.breadcrumbs.valuation,
+    store: t.breadcrumbs.store,
+    order: t.breadcrumbs.order,
+    admin: t.breadcrumbs.admin,
+    "audit-logs": t.breadcrumbs.auditLogs,
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -68,7 +73,7 @@ export function Header({ userContext }: HeaderProps) {
       // Skip UUID-like segments in display
       const isId = /^[0-9a-f-]{20,}$/.test(segment);
       const label = isId
-        ? "Detail"
+        ? t.breadcrumbs.detail
         : BREADCRUMB_LABELS[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
 
       return {
@@ -88,6 +93,7 @@ export function Header({ userContext }: HeaderProps) {
         <div className="text-xs text-gray-400">{userContext.tenantName}</div>
       </div>
       <div className="flex items-center gap-4">
+        <LanguageSwitcher />
         <div className="text-right">
           <div className="text-sm font-medium text-gray-700">
             {userContext.fullName}
@@ -100,7 +106,7 @@ export function Header({ userContext }: HeaderProps) {
           onClick={handleSignOut}
           className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors border border-gray-200"
         >
-          Sign out
+          {t.auth.signOut}
         </button>
       </div>
     </header>

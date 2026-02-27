@@ -2,6 +2,7 @@
 
 import { Steps } from "antd";
 import dayjs from "dayjs";
+import { useTranslation } from "@/lib/i18n";
 
 interface ReceivingStepsProps {
   status: string;
@@ -33,6 +34,7 @@ function getStepStatus(status: string) {
 
 export function ReceivingSteps(props: ReceivingStepsProps) {
   const { current, statuses } = getStepStatus(props.status);
+  const { t } = useTranslation();
 
   const formatDesc = (user?: { fullName: string } | null, date?: string | null, extra?: string) => {
     const parts: string[] = [];
@@ -48,21 +50,21 @@ export function ReceivingSteps(props: ReceivingStepsProps) {
       size="small"
       items={[
         {
-          title: "Procurement Verified",
+          title: t.receiving.steps.receiving,
           status: statuses[0],
           description: formatDesc(props.procVerifiedBy, props.procVerifiedAt),
         },
         {
-          title: "QC Inspected",
+          title: t.receiving.steps.qcInspection,
           status: statuses[1],
           description: formatDesc(
             props.qcInspectedBy,
             props.qcInspectedAt,
-            props.qcResult ? `Result: ${props.qcResult}` : undefined
+            props.qcResult ? `${t.receiving.qc.qcResult}: ${props.qcResult}` : undefined
           ),
         },
         {
-          title: "Warehouse Received",
+          title: t.receiving.steps.putaway,
           status: statuses[2],
           description: formatDesc(props.warehouseReceivedBy, props.warehouseReceivedAt),
         },

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Table, Button, Tag, App, Empty, Popconfirm, Input } from "antd";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -21,6 +22,7 @@ interface TransferRecord {
 
 export default function PendingApprovalsPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const user = useUserStore((s) => s.user);
   const hasPermission = useUserStore((s) => s.hasPermission);
   const [transfers, setTransfers] = useState<TransferRecord[]>([]);
@@ -34,7 +36,7 @@ export default function PendingApprovalsPage() {
     if (json.success) {
       setTransfers(json.data.data || []);
     } else {
-      message.error("Failed to load transfers");
+      message.error(t.transfers.fulfill.failedToLoad);
     }
     setLoading(false);
   }, [message]);
@@ -59,50 +61,50 @@ export default function PendingApprovalsPage() {
       const json = await res.json();
       if (json.success) {
         message.success(
-          action === "approve" ? "Transfer approved!" : "Transfer rejected."
+          action === "approve" ? t.transfers.pending.transferApproved : t.transfers.pending.transferRejected
         );
         setRejectReason("");
         fetchTransfers();
       } else {
-        message.error(json.error || `Failed to ${action}`);
+        message.error(json.error || (action === "approve" ? t.transfers.pending.failedToApprove : t.transfers.pending.failedToReject));
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setActionLoading(false);
   };
 
   const columns: ColumnsType<TransferRecord> = [
-    { title: "Transfer #", dataIndex: "transferNumber", width: 130 },
+    { title: t.transfers.columns.transferNumber, dataIndex: "transferNumber", width: 130 },
     {
-      title: "From",
+      title: t.transfers.columns.from,
       dataIndex: ["fromLocation", "name"],
       ellipsis: true,
     },
     {
-      title: "To",
+      title: t.transfers.columns.to,
       dataIndex: ["toLocation", "name"],
       ellipsis: true,
     },
     {
-      title: "Status",
+      title: t.transfers.columns.status,
       dataIndex: "status",
       width: 100,
-      render: () => <Tag color="orange">Pending</Tag>,
+      render: () => <Tag color="orange">{t.transfers.statusLabels.PENDING_APPROVAL}</Tag>,
     },
     {
-      title: "Created By",
+      title: t.transfers.columns.createdBy,
       dataIndex: ["createdBy", "fullName"],
       width: 140,
     },
     {
-      title: "Items",
+      title: t.transfers.columns.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
     },
     {
-      title: "Created",
+      title: t.transfers.columns.createdAt,
       dataIndex: "createdAt",
       width: 140,
       render: (v: string) => dayjs(v).format("DD MMM YYYY HH:mm"),
@@ -126,24 +128,24 @@ export default function PendingApprovalsPage() {
               onClick={() => handleAction(record.id, "approve")}
               loading={actionLoading}
             >
-              Approve
+              {t.transfers.pending.approveTransfer}
             </Button>
             <Popconfirm
-              title="Reject Transfer"
+              title={t.transfers.pending.rejectTitle}
               description={
                 <Input.TextArea
                   rows={2}
-                  placeholder="Reason for rejection..."
+                  placeholder={t.transfers.pending.rejectPlaceholder}
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                 />
               }
               onConfirm={() => handleAction(record.id, "reject")}
-              okText="Reject"
+              okText={t.common.reject}
               okButtonProps={{ danger: true }}
             >
               <Button danger size="small" icon={<CloseOutlined />} disabled={actionLoading}>
-                Reject
+                {t.transfers.pending.rejectTransfer}
               </Button>
             </Popconfirm>
           </div>
@@ -153,7 +155,7 @@ export default function PendingApprovalsPage() {
   ];
 
   if (transfers.length === 0 && !loading) {
-    return <Empty description="No transfers pending approval" />;
+    return <Empty description={t.transfers.pending.noPendingTransfers} />;
   }
 
   return (

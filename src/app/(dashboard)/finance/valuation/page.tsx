@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Table, Button, Card, Statistic, App } from "antd";
 import { DollarOutlined, DownloadOutlined } from "@ant-design/icons";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface ValuationRow {
@@ -25,6 +26,7 @@ interface ValuationData {
 
 export default function ValuationPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [data, setData] = useState<ValuationData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,10 +37,10 @@ export default function ValuationPage() {
     if (json.success) {
       setData(json.data);
     } else {
-      message.error("Failed to load valuation data");
+      message.error(t.finance.valuation.failedToLoad);
     }
     setLoading(false);
-  }, [message]);
+  }, [message, t]);
 
   useEffect(() => {
     fetchData();
@@ -51,16 +53,16 @@ export default function ValuationPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "Inventory Valuation Report",
+          title: t.finance.valuation.title,
           columns: [
-            { header: "Item Code", key: "itemCode", width: 15 },
-            { header: "Item Name", key: "itemName", width: 30 },
-            { header: "UOM", key: "uom", width: 8 },
-            { header: "Category", key: "category", width: 20 },
-            { header: "Location", key: "location", width: 20 },
-            { header: "Quantity", key: "quantity", width: 12 },
-            { header: "Avg Cost", key: "avgCost", width: 12 },
-            { header: "Total Value", key: "totalValue", width: 15 },
+            { header: t.finance.valuation.columns.itemCode, key: "itemCode", width: 15 },
+            { header: t.finance.valuation.columns.itemName, key: "itemName", width: 30 },
+            { header: t.finance.valuation.uom, key: "uom", width: 8 },
+            { header: t.finance.valuation.category, key: "category", width: 20 },
+            { header: t.finance.valuation.columns.location, key: "location", width: 20 },
+            { header: t.finance.valuation.columns.quantity, key: "quantity", width: 12 },
+            { header: t.finance.valuation.columns.avgCost, key: "avgCost", width: 12 },
+            { header: t.finance.valuation.columns.totalValue, key: "totalValue", width: 15 },
           ],
           rows: data.rows,
         }),
@@ -74,34 +76,34 @@ export default function ValuationPage() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        message.error("Failed to export");
+        message.error(t.finance.valuation.failedToExport);
       }
     } catch {
-      message.error("Network error during export");
+      message.error(t.finance.valuation.networkErrorExport);
     }
   };
 
   const columns: ColumnsType<ValuationRow> = [
-    { title: "Item Code", dataIndex: "itemCode", width: 110 },
-    { title: "Item Name", dataIndex: "itemName", ellipsis: true },
-    { title: "UOM", dataIndex: "uom", width: 60, align: "center" },
-    { title: "Category", dataIndex: "category", width: 140 },
-    { title: "Location", dataIndex: "location", width: 140 },
+    { title: t.finance.valuation.columns.itemCode, dataIndex: "itemCode", width: 110 },
+    { title: t.finance.valuation.columns.itemName, dataIndex: "itemName", ellipsis: true },
+    { title: t.finance.valuation.uom, dataIndex: "uom", width: 60, align: "center" },
+    { title: t.finance.valuation.category, dataIndex: "category", width: 140 },
+    { title: t.finance.valuation.columns.location, dataIndex: "location", width: 140 },
     {
-      title: "Quantity",
+      title: t.finance.valuation.columns.quantity,
       dataIndex: "quantity",
       width: 100,
       align: "right",
     },
     {
-      title: "Avg Cost",
+      title: t.finance.valuation.columns.avgCost,
       dataIndex: "avgCost",
       width: 100,
       align: "right",
       render: (v: number) => `$${v.toFixed(2)}`,
     },
     {
-      title: "Total Value",
+      title: t.finance.valuation.columns.totalValue,
       dataIndex: "totalValue",
       width: 120,
       align: "right",
@@ -116,7 +118,7 @@ export default function ValuationPage() {
       <div className="grid grid-cols-2 gap-4">
         <Card size="small">
           <Statistic
-            title="Total Inventory Value"
+            title={t.finance.valuation.totalInventoryValue}
             value={data?.totalValue || 0}
             precision={2}
             prefix={<DollarOutlined />}
@@ -124,7 +126,7 @@ export default function ValuationPage() {
         </Card>
         <Card size="small">
           <Statistic
-            title="Total Items in Stock"
+            title={t.finance.valuation.totalItemsInStock}
             value={data?.totalQty || 0}
             precision={0}
           />
@@ -133,7 +135,7 @@ export default function ValuationPage() {
 
       <div className="flex justify-end">
         <Button icon={<DownloadOutlined />} onClick={handleExport}>
-          Export to Excel
+          {t.finance.valuation.exportCsv}
         </Button>
       </div>
 
@@ -142,13 +144,13 @@ export default function ValuationPage() {
         columns={columns}
         dataSource={data?.rows || []}
         loading={loading}
-        pagination={{ pageSize: 50, showTotal: (t) => `${t} items` }}
+        pagination={{ pageSize: 50, showTotal: (total) => `${total} ${t.common.items}` }}
         size="small"
         summary={() =>
           data ? (
             <Table.Summary.Row>
               <Table.Summary.Cell index={0} colSpan={5}>
-                <strong>Total</strong>
+                <strong>{t.common.total}</strong>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={5} align="right">
                 <strong>{data.totalQty}</strong>

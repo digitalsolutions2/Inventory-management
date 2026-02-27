@@ -20,6 +20,7 @@ import {
   Cell,
 } from "recharts";
 import { exportToExcel } from "@/lib/export-excel";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface Row {
@@ -46,30 +47,31 @@ function scoreColor(score: number): string {
   return "#ff4d4f";
 }
 
-function scoreTag(score: number) {
-  if (score >= 90)
-    return (
-      <Tag color="green" icon={<TrophyOutlined />}>
-        Excellent
-      </Tag>
-    );
-  if (score >= 70) return <Tag color="orange">Good</Tag>;
-  return <Tag color="red">Needs Improvement</Tag>;
-}
-
 export default function SupplierPerformanceReport() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const scoreTag = useCallback((score: number) => {
+    if (score >= 90)
+      return (
+        <Tag color="green" icon={<TrophyOutlined />}>
+          {t.reports.excellent}
+        </Tag>
+      );
+    if (score >= 70) return <Tag color="orange">{t.reports.good}</Tag>;
+    return <Tag color="red">{t.reports.needsImprovement}</Tag>;
+  }, [t]);
 
   const fetch_ = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/reports/supplier-performance");
     const json = await res.json();
     if (json.success) setRows(json.data.suppliers);
-    else message.error("Failed to load report");
+    else message.error(t.reports.failedToLoad);
     setLoading(false);
-  }, [message]);
+  }, [message, t]);
 
   useEffect(() => {
     fetch_();
@@ -96,11 +98,11 @@ export default function SupplierPerformanceReport() {
   const avgQuality = scored.length > 0 ? Math.round(scored.reduce((s, r) => s + r.qualityRate, 0) / scored.length) : 0;
 
   const columns: ColumnsType<(typeof scored)[0]> = [
-    { title: "Code", dataIndex: "supplierCode", width: 80 },
-    { title: "Supplier", dataIndex: "supplierName", ellipsis: true },
-    { title: "POs", dataIndex: "totalPOs", width: 60, align: "right" },
+    { title: t.reports.code, dataIndex: "supplierCode", width: 80 },
+    { title: t.reports.supplier, dataIndex: "supplierName", ellipsis: true },
+    { title: t.reports.pos, dataIndex: "totalPOs", width: 60, align: "right" },
     {
-      title: "Total Spend",
+      title: t.reports.totalSpend,
       dataIndex: "totalSpend",
       width: 120,
       align: "right",
@@ -108,7 +110,7 @@ export default function SupplierPerformanceReport() {
       sorter: (a, b) => a.totalSpend - b.totalSpend,
     },
     {
-      title: "On-Time %",
+      title: t.reports.onTimePercent,
       dataIndex: "onTimeRate",
       width: 150,
       render: (v: number) => (
@@ -122,7 +124,7 @@ export default function SupplierPerformanceReport() {
       sorter: (a, b) => a.onTimeRate - b.onTimeRate,
     },
     {
-      title: "Quality %",
+      title: t.reports.qualityPercent,
       dataIndex: "qualityRate",
       width: 150,
       render: (v: number) => (
@@ -136,15 +138,15 @@ export default function SupplierPerformanceReport() {
       sorter: (a, b) => a.qualityRate - b.qualityRate,
     },
     {
-      title: "Avg Lead Time",
+      title: t.reports.avgLeadTime,
       dataIndex: "avgLeadTimeDays",
       width: 120,
       align: "right",
-      render: (v: number) => (v > 0 ? `${v} days` : "-"),
+      render: (v: number) => (v > 0 ? `${v} ${t.reports.days}` : "-"),
       sorter: (a, b) => a.avgLeadTimeDays - b.avgLeadTimeDays,
     },
     {
-      title: "Score",
+      title: t.reports.score,
       dataIndex: "score",
       width: 100,
       align: "center",
@@ -157,7 +159,7 @@ export default function SupplierPerformanceReport() {
       ),
     },
     {
-      title: "Rating",
+      title: t.reports.rating,
       width: 140,
       render: (_, r) => scoreTag(r.score),
     },
@@ -168,11 +170,11 @@ export default function SupplierPerformanceReport() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#1890ff" }}>
-          <Statistic title="Total Suppliers" value={scored.length} prefix={<TeamOutlined />} />
+          <Statistic title={t.reports.totalSuppliers} value={scored.length} prefix={<TeamOutlined />} />
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#52c41a" }}>
           <Statistic
-            title="Avg Performance Score"
+            title={t.reports.avgPerformanceScore}
             value={avgScore}
             suffix="/100"
             prefix={<TrophyOutlined />}
@@ -181,7 +183,7 @@ export default function SupplierPerformanceReport() {
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#722ed1" }}>
           <Statistic
-            title="Avg On-Time Rate"
+            title={t.reports.avgOnTimeRate}
             value={avgOnTime}
             suffix="%"
             prefix={<ClockCircleOutlined />}
@@ -190,7 +192,7 @@ export default function SupplierPerformanceReport() {
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#13c2c2" }}>
           <Statistic
-            title="Avg Quality Rate"
+            title={t.reports.avgQualityRate}
             value={avgQuality}
             suffix="%"
             prefix={<CheckCircleOutlined />}
@@ -202,13 +204,13 @@ export default function SupplierPerformanceReport() {
       {/* Performance Formula */}
       <Card size="small" styles={{ body: { padding: "8px 16px" } }}>
         <span className="text-xs text-gray-500">
-          <strong>Performance Score</strong> = On-Time Delivery (40%) + Quality Acceptance (40%) + Lead Time Efficiency (20%)
+          {t.reports.performanceFormula}
         </span>
       </Card>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Top 5 Suppliers by Score" size="small" styles={{ body: { padding: "12px 12px 0" } }}>
+        <Card title={t.reports.top5SuppliersByScore} size="small" styles={{ body: { padding: "12px 12px 0" } }}>
           {top5.length === 0 ? (
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
@@ -221,7 +223,7 @@ export default function SupplierPerformanceReport() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} fontSize={11} />
                 <YAxis type="category" dataKey="supplierName" width={100} fontSize={10} />
-                <Tooltip formatter={(value) => [`${value}/100`, "Score"]} />
+                <Tooltip formatter={(value) => [`${value}/100`, t.reports.score]} />
                 <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                   {top5.map((r, i) => (
                     <Cell key={i} fill={scoreColor(r.score)} />
@@ -232,7 +234,7 @@ export default function SupplierPerformanceReport() {
           )}
         </Card>
 
-        <Card title="Bottom 5 Suppliers by Score" size="small" styles={{ body: { padding: "12px 12px 0" } }}>
+        <Card title={t.reports.bottom5SuppliersByScore} size="small" styles={{ body: { padding: "12px 12px 0" } }}>
           {bottom5.length === 0 ? (
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
@@ -245,7 +247,7 @@ export default function SupplierPerformanceReport() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} fontSize={11} />
                 <YAxis type="category" dataKey="supplierName" width={100} fontSize={10} />
-                <Tooltip formatter={(value) => [`${value}/100`, "Score"]} />
+                <Tooltip formatter={(value) => [`${value}/100`, t.reports.score]} />
                 <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                   {bottom5.map((r, i) => (
                     <Cell key={i} fill={scoreColor(r.score)} />
@@ -259,7 +261,7 @@ export default function SupplierPerformanceReport() {
 
       {/* Performance Table */}
       <Card
-        title="All Suppliers"
+        title={t.reports.allSuppliers}
         size="small"
         extra={
           <Button
@@ -268,19 +270,19 @@ export default function SupplierPerformanceReport() {
             size="small"
             onClick={() =>
               exportToExcel("Supplier Performance", [
-                { header: "Code", key: "supplierCode", width: 10 },
-                { header: "Supplier", key: "supplierName", width: 25 },
-                { header: "Total POs", key: "totalPOs", width: 10 },
-                { header: "Total Spend", key: "totalSpend", width: 15 },
-                { header: "Avg Order", key: "avgOrderValue", width: 15 },
-                { header: "On-Time %", key: "onTimeRate", width: 12 },
-                { header: "Quality %", key: "qualityRate", width: 12 },
-                { header: "Avg Lead Time", key: "avgLeadTimeDays", width: 15 },
-                { header: "Score", key: "score", width: 10 },
+                { header: t.reports.code, key: "supplierCode", width: 10 },
+                { header: t.reports.supplier, key: "supplierName", width: 25 },
+                { header: t.reports.pos, key: "totalPOs", width: 10 },
+                { header: t.reports.totalSpend, key: "totalSpend", width: 15 },
+                { header: t.reports.avgOrder, key: "avgOrderValue", width: 15 },
+                { header: t.reports.onTimePercent, key: "onTimeRate", width: 12 },
+                { header: t.reports.qualityPercent, key: "qualityRate", width: 12 },
+                { header: t.reports.avgLeadTime, key: "avgLeadTimeDays", width: 15 },
+                { header: t.reports.score, key: "score", width: 10 },
               ], scored)
             }
           >
-            Export to Excel
+            {t.common.exportToExcel}
           </Button>
         }
       >

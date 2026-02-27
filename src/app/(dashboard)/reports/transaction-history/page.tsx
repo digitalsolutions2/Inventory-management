@@ -20,6 +20,7 @@ import {
   Legend,
 } from "recharts";
 import { exportToExcel } from "@/lib/export-excel";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -55,12 +56,21 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 
 export default function TransactionHistoryReport() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null]>([null, null]);
+
+  const TYPE_LABELS: Record<string, string> = {
+    INBOUND: t.reports.inbound,
+    OUTBOUND: t.reports.outbound,
+    TRANSFER_IN: t.reports.transferIn,
+    TRANSFER_OUT: t.reports.transferOut,
+    ADJUSTMENT: t.reports.adjustment,
+  };
 
   const fetch_ = useCallback(async () => {
     setLoading(true);
@@ -74,9 +84,9 @@ export default function TransactionHistoryReport() {
     if (json.success) {
       setRows(json.data.rows);
       setTotal(json.data.total);
-    } else message.error("Failed to load report");
+    } else message.error(t.reports.failedToLoad);
     setLoading(false);
-  }, [page, typeFilter, dateRange, message]);
+  }, [page, typeFilter, dateRange, message, t.reports.failedToLoad]);
 
   useEffect(() => {
     fetch_();
@@ -91,7 +101,7 @@ export default function TransactionHistoryReport() {
   const typeBreakdown = Object.entries(
     rows.reduce(
       (acc, r) => {
-        const label = r.type.replace("_", " ");
+        const label = TYPE_LABELS[r.type] || r.type.replace("_", " ");
         if (!acc[label]) acc[label] = { type: label, count: 0, qty: 0 };
         acc[label].count++;
         acc[label].qty += r.quantity;
@@ -103,7 +113,7 @@ export default function TransactionHistoryReport() {
 
   const columns: ColumnsType<Row> = [
     {
-      title: "Date",
+      title: t.common.date,
       dataIndex: "date",
       width: 150,
       render: (v: string) => dayjs(v).format("DD MMM YYYY HH:mm"),
@@ -111,28 +121,28 @@ export default function TransactionHistoryReport() {
       defaultSortOrder: "descend",
     },
     {
-      title: "Type",
+      title: t.common.type,
       dataIndex: "type",
       width: 130,
       render: (v: string) => (
         <Tag color={TYPE_COLORS[v]} icon={TYPE_ICONS[v]}>
-          {v.replace("_", " ")}
+          {TYPE_LABELS[v] || v.replace("_", " ")}
         </Tag>
       ),
       filters: [
-        { text: "Inbound", value: "INBOUND" },
-        { text: "Outbound", value: "OUTBOUND" },
-        { text: "Transfer In", value: "TRANSFER_IN" },
-        { text: "Transfer Out", value: "TRANSFER_OUT" },
-        { text: "Adjustment", value: "ADJUSTMENT" },
+        { text: t.reports.inbound, value: "INBOUND" },
+        { text: t.reports.outbound, value: "OUTBOUND" },
+        { text: t.reports.transferIn, value: "TRANSFER_IN" },
+        { text: t.reports.transferOut, value: "TRANSFER_OUT" },
+        { text: t.reports.adjustment, value: "ADJUSTMENT" },
       ],
       onFilter: (v, r) => r.type === v,
     },
-    { title: "Code", dataIndex: "itemCode", width: 100 },
-    { title: "Item", dataIndex: "itemName", ellipsis: true },
-    { title: "Location", dataIndex: "location", width: 130 },
+    { title: t.reports.code, dataIndex: "itemCode", width: 100 },
+    { title: t.reports.item, dataIndex: "itemName", ellipsis: true },
+    { title: t.reports.location, dataIndex: "location", width: 130 },
     {
-      title: "Qty",
+      title: t.reports.qty,
       dataIndex: "quantity",
       width: 80,
       align: "right",
@@ -150,14 +160,14 @@ export default function TransactionHistoryReport() {
       ),
     },
     {
-      title: "Unit Cost",
+      title: t.reports.unitCost,
       dataIndex: "unitCost",
       width: 100,
       align: "right",
       render: (v: number | null) => (v ? `$${v.toFixed(2)}` : "-"),
     },
-    { title: "Reference", dataIndex: "referenceType", width: 120, render: (v: string | null) => v || "-" },
-    { title: "Notes", dataIndex: "notes", ellipsis: true, render: (v: string | null) => v || "-" },
+    { title: t.reports.reference, dataIndex: "referenceType", width: 120, render: (v: string | null) => v || "-" },
+    { title: t.common.notes, dataIndex: "notes", ellipsis: true, render: (v: string | null) => v || "-" },
   ];
 
   return (
@@ -165,22 +175,22 @@ export default function TransactionHistoryReport() {
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#1890ff" }}>
-          <Statistic title="Total Transactions" value={total} prefix={<SwapOutlined />} />
+          <Statistic title={t.reports.totalTransactions} value={total} prefix={<SwapOutlined />} />
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#52c41a" }}>
-          <Statistic title="Inbound Qty" value={inboundQty} prefix={<ArrowDownOutlined />} styles={{ content: { color: "#52c41a" } }} />
+          <Statistic title={t.reports.inboundQty} value={inboundQty} prefix={<ArrowDownOutlined />} styles={{ content: { color: "#52c41a" } }} />
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#ff4d4f" }}>
-          <Statistic title="Outbound Qty" value={outboundQty} prefix={<ArrowUpOutlined />} styles={{ content: { color: "#ff4d4f" } }} />
+          <Statistic title={t.reports.outboundQty} value={outboundQty} prefix={<ArrowUpOutlined />} styles={{ content: { color: "#ff4d4f" } }} />
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#722ed1" }}>
-          <Statistic title="Transfer Qty" value={transferQty} prefix={<SwapOutlined />} />
+          <Statistic title={t.reports.transferQty} value={transferQty} prefix={<SwapOutlined />} />
         </Card>
       </div>
 
       {/* Type Breakdown Chart */}
       {typeBreakdown.length > 0 && (
-        <Card title="Transaction Breakdown (Current Page)" size="small" styles={{ body: { padding: "12px 12px 0" } }}>
+        <Card title={t.reports.transactionBreakdownCurrentPage} size="small" styles={{ body: { padding: "12px 12px 0" } }}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={typeBreakdown} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -188,8 +198,8 @@ export default function TransactionHistoryReport() {
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="count" name="Transactions" fill="#1890ff" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="qty" name="Quantity" fill="#52c41a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" name={t.reports.transactions} fill="#1890ff" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="qty" name={t.common.quantity} fill="#52c41a" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -199,7 +209,7 @@ export default function TransactionHistoryReport() {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <div className="flex gap-2 items-center flex-wrap">
           <Select
-            placeholder="Transaction type"
+            placeholder={t.reports.transactionType}
             value={typeFilter || undefined}
             onChange={(v) => {
               setTypeFilter(v || "");
@@ -208,11 +218,11 @@ export default function TransactionHistoryReport() {
             allowClear
             className="w-48"
             options={[
-              { value: "INBOUND", label: "Inbound" },
-              { value: "OUTBOUND", label: "Outbound" },
-              { value: "TRANSFER_IN", label: "Transfer In" },
-              { value: "TRANSFER_OUT", label: "Transfer Out" },
-              { value: "ADJUSTMENT", label: "Adjustment" },
+              { value: "INBOUND", label: t.reports.inbound },
+              { value: "OUTBOUND", label: t.reports.outbound },
+              { value: "TRANSFER_IN", label: t.reports.transferIn },
+              { value: "TRANSFER_OUT", label: t.reports.transferOut },
+              { value: "ADJUSTMENT", label: t.reports.adjustment },
             ]}
           />
           <DatePicker.RangePicker
@@ -227,20 +237,20 @@ export default function TransactionHistoryReport() {
           icon={<DownloadOutlined />}
           type="primary"
           onClick={() =>
-            exportToExcel("Transaction History", [
-              { header: "Date", key: "date", width: 20 },
-              { header: "Type", key: "type", width: 15 },
-              { header: "Item Code", key: "itemCode", width: 12 },
-              { header: "Item", key: "itemName", width: 25 },
-              { header: "Location", key: "location", width: 18 },
-              { header: "Qty", key: "quantity", width: 10 },
-              { header: "Unit Cost", key: "unitCost", width: 12 },
-              { header: "Reference", key: "referenceType", width: 15 },
-              { header: "Notes", key: "notes", width: 25 },
+            exportToExcel(t.reports.transactionHistory, [
+              { header: t.common.date, key: "date", width: 20 },
+              { header: t.common.type, key: "type", width: 15 },
+              { header: t.reports.code, key: "itemCode", width: 12 },
+              { header: t.reports.item, key: "itemName", width: 25 },
+              { header: t.reports.location, key: "location", width: 18 },
+              { header: t.reports.qty, key: "quantity", width: 10 },
+              { header: t.reports.unitCost, key: "unitCost", width: 12 },
+              { header: t.reports.reference, key: "referenceType", width: 15 },
+              { header: t.common.notes, key: "notes", width: 25 },
             ], rows)
           }
         >
-          Export to Excel
+          {t.common.exportToExcel}
         </Button>
       </div>
 
@@ -257,7 +267,7 @@ export default function TransactionHistoryReport() {
           pageSize: 50,
           total,
           onChange: (p) => setPage(p),
-          showTotal: (t) => `${t} transactions`,
+          showTotal: (total) => `${total} ${t.reports.transactions}`,
           showSizeChanger: false,
         }}
       />

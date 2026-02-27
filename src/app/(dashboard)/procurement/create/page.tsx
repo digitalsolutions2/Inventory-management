@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface Supplier {
@@ -43,6 +44,7 @@ let lineKeyCounter = 0;
 export default function CreatePOPage() {
   const { message } = App.useApp();
   const router = useRouter();
+  const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [supplierId, setSupplierId] = useState<string>("");
@@ -98,16 +100,16 @@ export default function CreatePOPage() {
 
   const handleSave = async (submitForApproval: boolean) => {
     if (!supplierId) {
-      message.error("Please select a supplier");
+      message.error(t.procurement.supplierRequired);
       return;
     }
     if (lines.length === 0) {
-      message.error("Add at least one line item");
+      message.error(t.procurement.addAtLeastOneLine);
       return;
     }
     const invalidLines = lines.filter((l) => !l.itemId || l.quantity <= 0 || l.unitCost <= 0);
     if (invalidLines.length > 0) {
-      message.error("All lines must have item, quantity > 0, and unit cost > 0");
+      message.error(t.procurement.allLinesMustBeValid);
       return;
     }
 
@@ -130,7 +132,7 @@ export default function CreatePOPage() {
       });
       const json = await res.json();
       if (!json.success) {
-        message.error(json.error || "Failed to create PO");
+        message.error(json.error || t.procurement.failedToCreate);
         return;
       }
 
@@ -141,13 +143,13 @@ export default function CreatePOPage() {
         );
         const submitJson = await submitRes.json();
         if (!submitJson.success) {
-          message.warning("PO created as draft but failed to submit: " + submitJson.error);
+          message.warning(t.procurement.poCreatedButFailedSubmit + ": " + submitJson.error);
           router.push(`/procurement/${json.data.id}`);
           return;
         }
-        message.success("PO created and submitted for approval");
+        message.success(t.procurement.poCreatedAndSubmitted);
       } else {
-        message.success("PO saved as draft");
+        message.success(t.procurement.poSavedAsDraft);
       }
       router.push(`/procurement/${json.data.id}`);
     } finally {
@@ -157,14 +159,14 @@ export default function CreatePOPage() {
 
   const lineColumns: ColumnsType<LineItem> = [
     {
-      title: "Item",
+      title: t.procurement.columns.item,
       dataIndex: "itemId",
       width: 300,
       render: (val: string, record) => (
         <Select
           value={val || undefined}
           onChange={(v) => updateLine(record.key, "itemId", v)}
-          placeholder="Select item"
+          placeholder={t.procurement.selectItem}
           showSearch
           optionFilterProp="label"
           className="w-full"
@@ -176,7 +178,7 @@ export default function CreatePOPage() {
       ),
     },
     {
-      title: "Qty",
+      title: t.procurement.columns.qty,
       dataIndex: "quantity",
       width: 100,
       render: (val: number, record) => (
@@ -189,7 +191,7 @@ export default function CreatePOPage() {
       ),
     },
     {
-      title: "Unit Cost",
+      title: t.procurement.columns.unitCost,
       dataIndex: "unitCost",
       width: 120,
       render: (val: number, record) => (
@@ -203,7 +205,7 @@ export default function CreatePOPage() {
       ),
     },
     {
-      title: "Total",
+      title: t.procurement.columns.total,
       width: 120,
       align: "right",
       render: (_, record) => (record.quantity * record.unitCost).toFixed(2),
@@ -227,19 +229,19 @@ export default function CreatePOPage() {
     <div>
       <div className="flex items-center gap-3 mb-4">
         <Button icon={<ArrowLeftOutlined />} onClick={() => router.push("/procurement")} />
-        <h1 className="text-2xl font-bold text-gray-900">Create Purchase Order</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.procurement.createPO}</h1>
       </div>
 
       <Card className="mb-4">
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Supplier *
+              {t.procurement.supplier} *
             </label>
             <Select
               value={supplierId || undefined}
               onChange={setSupplierId}
-              placeholder="Select supplier"
+              placeholder={t.procurement.selectSupplier}
               showSearch
               optionFilterProp="label"
               className="w-full"
@@ -251,7 +253,7 @@ export default function CreatePOPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Expected Delivery Date
+              {t.procurement.expectedDeliveryDate}
             </label>
             <DatePicker
               className="w-full"
@@ -262,23 +264,23 @@ export default function CreatePOPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes
+              {t.common.notes}
             </label>
             <Input.TextArea
               rows={1}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes"
+              placeholder={t.procurement.optionalNotes}
             />
           </div>
         </div>
       </Card>
 
       <Card
-        title="Line Items"
+        title={t.procurement.lineItems}
         extra={
           <Button icon={<PlusOutlined />} onClick={addLine} size="small">
-            Add Line
+            {t.procurement.addLine}
           </Button>
         }
       >
@@ -288,30 +290,30 @@ export default function CreatePOPage() {
           dataSource={lines}
           pagination={false}
           size="small"
-          locale={{ emptyText: "No line items. Click 'Add Line' to start." }}
+          locale={{ emptyText: t.procurement.noLineItems }}
         />
         {lines.length > 0 && (
           <div className="flex justify-end mt-4 text-lg font-semibold">
-            Total: SAR {totalAmount.toFixed(2)}
+            {t.common.total}: SAR {totalAmount.toFixed(2)}
           </div>
         )}
       </Card>
 
       <div className="flex justify-end gap-3 mt-4">
-        <Button onClick={() => router.push("/procurement")}>Cancel</Button>
+        <Button onClick={() => router.push("/procurement")}>{t.common.cancel}</Button>
         <Space>
           <Button
             onClick={() => handleSave(false)}
             loading={submitting}
           >
-            Save as Draft
+            {t.procurement.saveAsDraft}
           </Button>
           <Button
             type="primary"
             onClick={() => handleSave(true)}
             loading={submitting}
           >
-            Submit for Approval
+            {t.procurement.submitForApproval}
           </Button>
         </Space>
       </div>

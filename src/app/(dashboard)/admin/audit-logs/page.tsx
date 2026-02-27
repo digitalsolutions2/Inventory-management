@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Table, Button, Select, DatePicker, Tag, App } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import { exportToExcel } from "@/lib/export-excel";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -25,6 +26,7 @@ const ENTITY_COLORS: Record<string, string> = {
 
 export default function AuditLogsPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -42,26 +44,26 @@ export default function AuditLogsPage() {
     const res = await fetch(`/api/audit-logs?${params}`);
     const json = await res.json();
     if (json.success) { setLogs(json.data.data); setTotal(json.data.total); }
-    else message.error("Failed to load audit logs");
+    else message.error(t.admin.auditLogs.failedToLoad);
     setLoading(false);
-  }, [page, entityType, dateRange, message]);
+  }, [page, entityType, dateRange, message, t]);
 
   useEffect(() => { fetch_(); }, [fetch_]);
 
   const columns: ColumnsType<AuditLog> = [
     {
-      title: "Timestamp", dataIndex: "createdAt", width: 170,
+      title: t.admin.auditLogs.columns.timestamp, dataIndex: "createdAt", width: 170,
       render: (v: string) => dayjs(v).format("DD MMM YYYY HH:mm:ss"),
     },
-    { title: "User", dataIndex: ["user", "fullName"], width: 150, render: (v: string | undefined) => v || "System" },
-    { title: "Action", dataIndex: "action", width: 180, render: (v: string) => <Tag>{v}</Tag> },
+    { title: t.admin.auditLogs.columns.user, dataIndex: ["user", "fullName"], width: 150, render: (v: string | undefined) => v || t.admin.auditLogs.system },
+    { title: t.admin.auditLogs.columns.action, dataIndex: "action", width: 180, render: (v: string) => <Tag>{v}</Tag> },
     {
-      title: "Entity", dataIndex: "entityType", width: 140,
+      title: t.admin.auditLogs.columns.entityType, dataIndex: "entityType", width: 140,
       render: (v: string) => <Tag color={ENTITY_COLORS[v] || "default"}>{v}</Tag>,
     },
-    { title: "Entity ID", dataIndex: "entityId", width: 120, ellipsis: true, render: (v: string | null) => v ? v.slice(0, 8) + "..." : "-" },
+    { title: t.admin.auditLogs.columns.entityId, dataIndex: "entityId", width: 120, ellipsis: true, render: (v: string | null) => v ? v.slice(0, 8) + "..." : "-" },
     {
-      title: "Changes", width: 200, ellipsis: true,
+      title: t.admin.auditLogs.columns.details, width: 200, ellipsis: true,
       render: (_, r) => {
         if (r.afterData) return <span className="text-xs text-gray-500">{JSON.stringify(r.afterData).slice(0, 80)}</span>;
         return "-";
@@ -72,23 +74,23 @@ export default function AuditLogsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.admin.auditLogs.title}</h1>
       </div>
       <div className="bg-white rounded-lg shadow p-4 space-y-4">
         <div className="flex justify-between items-center flex-wrap gap-2">
           <div className="flex gap-2 items-center flex-wrap">
             <Select
-              placeholder="Entity type"
+              placeholder={t.admin.auditLogs.filterByEntity}
               value={entityType || undefined}
               onChange={(v) => { setEntityType(v || ""); setPage(1); }}
               allowClear
               className="w-48"
               options={[
-                { value: "PurchaseOrder", label: "Purchase Orders" },
-                { value: "Receiving", label: "Receiving" },
-                { value: "InternalRequest", label: "Internal Requests" },
-                { value: "Transfer", label: "Transfers" },
-                { value: "Payment", label: "Payments" },
+                { value: "PurchaseOrder", label: t.admin.auditLogs.purchaseOrders },
+                { value: "Receiving", label: t.admin.auditLogs.receiving },
+                { value: "InternalRequest", label: t.admin.auditLogs.internalRequests },
+                { value: "Transfer", label: t.admin.auditLogs.transfers },
+                { value: "Payment", label: t.admin.auditLogs.payments },
               ]}
             />
             <DatePicker.RangePicker
@@ -99,16 +101,16 @@ export default function AuditLogsPage() {
               }}
             />
           </div>
-          <Button icon={<DownloadOutlined />} onClick={() => exportToExcel("Audit Logs", [
-            { header: "Timestamp", key: "createdAt", width: 22 }, { header: "User", key: "userName", width: 20 },
-            { header: "Action", key: "action", width: 20 }, { header: "Entity", key: "entityType", width: 18 },
-            { header: "Entity ID", key: "entityId", width: 38 },
-          ], logs.map(l => ({ ...l, userName: l.user?.fullName || "System" })))}>Export</Button>
+          <Button icon={<DownloadOutlined />} onClick={() => exportToExcel(t.admin.auditLogs.title, [
+            { header: t.admin.auditLogs.columns.timestamp, key: "createdAt", width: 22 }, { header: t.admin.auditLogs.columns.user, key: "userName", width: 20 },
+            { header: t.admin.auditLogs.columns.action, key: "action", width: 20 }, { header: t.admin.auditLogs.columns.entityType, key: "entityType", width: 18 },
+            { header: t.admin.auditLogs.columns.entityId, key: "entityId", width: 38 },
+          ], logs.map(l => ({ ...l, userName: l.user?.fullName || t.admin.auditLogs.system })))}>{t.common.export}</Button>
         </div>
 
         <Table
           rowKey="id" columns={columns} dataSource={logs} loading={loading} size="small"
-          pagination={{ current: page, pageSize: 50, total, onChange: (p) => setPage(p), showTotal: (t) => `${t} logs` }}
+          pagination={{ current: page, pageSize: 50, total, onChange: (p) => setPage(p), showTotal: (tot) => `${tot} ${t.admin.auditLogs.logs}` }}
         />
       </div>
     </div>

@@ -12,6 +12,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined, SendOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -40,6 +41,7 @@ interface TransferDetail {
 
 export default function FulfillTransferPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [transfer, setTransfer] = useState<TransferDetail | null>(null);
@@ -54,7 +56,7 @@ export default function FulfillTransferPage() {
     if (json.success) {
       setTransfer(json.data);
     } else {
-      message.error("Failed to load transfer");
+      message.error(t.transfers.fulfill.failedToLoad);
     }
     setLoading(false);
   }, [id, message]);
@@ -75,12 +77,10 @@ export default function FulfillTransferPage() {
 
     const json = await res.json();
     if (json.success) {
-      message.success(
-        "Transfer shipped! Items deducted from source and now in transit."
-      );
+      message.success(t.transfers.fulfill.fulfilled);
       router.push("/transfers/fulfill");
     } else {
-      message.error(json.error || "Failed to fulfill transfer");
+      message.error(json.error || t.transfers.fulfill.failedToFulfill);
     }
     setSubmitting(false);
   };
@@ -94,22 +94,22 @@ export default function FulfillTransferPage() {
   }
 
   if (!transfer) {
-    return <Alert type="error" message="Transfer not found" showIcon />;
+    return <Alert type="error" message={t.transfers.fulfill.transferNotFound} showIcon />;
   }
 
   const columns: ColumnsType<TransferLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70, align: "center" },
+    { title: t.transfers.fulfill.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.transfers.fulfill.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.transfers.fulfill.uom, dataIndex: ["item", "uom"], width: 70, align: "center" },
     {
-      title: "Quantity to Ship",
+      title: t.transfers.fulfill.actualQty,
       dataIndex: "quantity",
       width: 140,
       align: "right",
       render: (v: number) => <span className="font-medium">{v}</span>,
     },
     {
-      title: "Notes",
+      title: t.transfers.fulfill.notesCol,
       dataIndex: "notes",
       render: (v: string | null) => v || "-",
     },
@@ -122,32 +122,32 @@ export default function FulfillTransferPage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/transfers/fulfill")}
       >
-        Back to Queue
+        {t.transfers.fulfill.backToQueue}
       </Button>
 
       <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Transfer #">
+        <Descriptions.Item label={t.transfers.columns.transferNumber}>
           {transfer.transferNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="Status">{transfer.status}</Descriptions.Item>
-        <Descriptions.Item label="From">
+        <Descriptions.Item label={t.transfers.columns.status}>{transfer.status}</Descriptions.Item>
+        <Descriptions.Item label={t.transfers.columns.from}>
           {transfer.fromLocation.code} - {transfer.fromLocation.name}
         </Descriptions.Item>
-        <Descriptions.Item label="To">
+        <Descriptions.Item label={t.transfers.columns.to}>
           {transfer.toLocation.code} - {transfer.toLocation.name}
         </Descriptions.Item>
-        <Descriptions.Item label="Created By">
+        <Descriptions.Item label={t.transfers.columns.createdBy}>
           {transfer.createdBy.fullName}
         </Descriptions.Item>
-        <Descriptions.Item label="Created">
+        <Descriptions.Item label={t.transfers.columns.createdAt}>
           {dayjs(transfer.createdAt).format("DD MMM YYYY HH:mm")}
         </Descriptions.Item>
         {transfer.approvedBy && (
           <>
-            <Descriptions.Item label="Approved By">
+            <Descriptions.Item label={t.transfers.fulfill.approvedBy}>
               {transfer.approvedBy.fullName}
             </Descriptions.Item>
-            <Descriptions.Item label="Approved At">
+            <Descriptions.Item label={t.transfers.fulfill.approvedAt}>
               {transfer.approvedAt
                 ? dayjs(transfer.approvedAt).format("DD MMM YYYY HH:mm")
                 : "-"}
@@ -155,14 +155,14 @@ export default function FulfillTransferPage() {
           </>
         )}
         {transfer.notes && (
-          <Descriptions.Item label="Notes" span={2}>
+          <Descriptions.Item label={t.common.notes} span={2}>
             <pre className="whitespace-pre-wrap text-sm">{transfer.notes}</pre>
           </Descriptions.Item>
         )}
       </Descriptions>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">Items to Pick & Pack</h3>
+        <h3 className="text-base font-semibold mb-2">{t.transfers.fulfill.itemsToPickPack}</h3>
         <Table
           rowKey="id"
           columns={columns}
@@ -174,17 +174,17 @@ export default function FulfillTransferPage() {
 
       <Alert
         type="info"
-        message="Confirming will deduct these items from the source location and mark them as in-transit."
+        message={t.transfers.fulfill.shipmentConfirmInfo}
         showIcon
       />
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Fulfillment Notes
+          {t.transfers.fulfill.fulfillmentNotes}
         </label>
         <Input.TextArea
           rows={2}
-          placeholder="Picking/packing notes..."
+          placeholder={t.transfers.fulfill.fulfillmentNotesPlaceholder}
           value={fulfillNotes}
           onChange={(e) => setFulfillNotes(e.target.value)}
         />
@@ -198,7 +198,7 @@ export default function FulfillTransferPage() {
           onClick={handleSubmit}
           loading={submitting}
         >
-          Confirm Shipment
+          {t.transfers.fulfill.confirmShipment}
         </Button>
       </div>
     </div>

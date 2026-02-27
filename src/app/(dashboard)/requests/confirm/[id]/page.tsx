@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -48,6 +49,7 @@ export default function ConfirmRequestPage() {
   const { message } = App.useApp();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -69,7 +71,7 @@ export default function ConfirmRequestPage() {
         }))
       );
     } else {
-      message.error("Failed to load request");
+      message.error(t.requests.confirm.failedToLoad);
     }
     setLoading(false);
   }, [id, message]);
@@ -110,10 +112,10 @@ export default function ConfirmRequestPage() {
 
     const json = await res.json();
     if (json.success) {
-      message.success("Receipt confirmed! Request completed.");
+      message.success(t.requests.confirm.confirmed);
       router.push("/requests/confirm");
     } else {
-      message.error(json.error || "Failed to confirm receipt");
+      message.error(json.error || t.requests.confirm.failedToConfirm);
     }
     setSubmitting(false);
   };
@@ -127,27 +129,27 @@ export default function ConfirmRequestPage() {
   }
 
   if (!request) {
-    return <Alert type="error" message="Request not found" showIcon />;
+    return <Alert type="error" message={t.requests.confirm.requestNotFound} showIcon />;
   }
 
   const columns: ColumnsType<RequestLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70, align: "center" },
+    { title: t.requests.confirm.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.requests.confirm.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.requests.confirm.uom, dataIndex: ["item", "uom"], width: 70, align: "center" },
     {
-      title: "Requested",
+      title: t.requests.confirm.requested,
       dataIndex: "requestedQty",
       width: 100,
       align: "right",
     },
     {
-      title: "Issued",
+      title: t.requests.confirm.issued,
       dataIndex: "issuedQty",
       width: 90,
       align: "right",
     },
     {
-      title: "Received Qty",
+      title: t.requests.confirm.receivedQty,
       width: 120,
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
@@ -164,26 +166,26 @@ export default function ConfirmRequestPage() {
       },
     },
     {
-      title: "Match?",
+      title: t.requests.confirm.match,
       width: 80,
       align: "center",
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
         return input?.confirmedQty === record.issuedQty ? (
-          <span className="text-green-600">Yes</span>
+          <span className="text-green-600">{t.common.yes}</span>
         ) : (
-          <span className="text-red-600">No</span>
+          <span className="text-red-600">{t.common.no}</span>
         );
       },
     },
     {
-      title: "Notes",
+      title: t.requests.confirm.notes,
       width: 180,
       render: (_, record) => {
         const input = lineInputs.find((l) => l.id === record.id);
         return (
           <Input
-            placeholder="Discrepancy reason..."
+            placeholder={t.requests.confirm.discrepancyReason}
             value={input?.notes}
             onChange={(e) => updateLine(record.id, "notes", e.target.value)}
             size="small"
@@ -200,37 +202,37 @@ export default function ConfirmRequestPage() {
         icon={<ArrowLeftOutlined />}
         onClick={() => router.push("/requests/confirm")}
       >
-        Back to Queue
+        {t.requests.confirm.backToQueue}
       </Button>
 
       <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Request #">
+        <Descriptions.Item label={t.requests.confirm.requestNumber}>
           {request.requestNumber}
         </Descriptions.Item>
-        <Descriptions.Item label="Status">{request.status}</Descriptions.Item>
-        <Descriptions.Item label="Requested By">
+        <Descriptions.Item label={t.common.status}>{request.status}</Descriptions.Item>
+        <Descriptions.Item label={t.requests.confirm.requestedBy}>
           {request.createdBy.fullName}
         </Descriptions.Item>
-        <Descriptions.Item label="Fulfilled By">
+        <Descriptions.Item label={t.requests.confirm.fulfilledBy}>
           {request.fulfilledBy?.fullName || "-"}
         </Descriptions.Item>
-        <Descriptions.Item label="Created">
+        <Descriptions.Item label={t.requests.confirm.created}>
           {dayjs(request.createdAt).format("DD MMM YYYY HH:mm")}
         </Descriptions.Item>
-        <Descriptions.Item label="Fulfilled At">
+        <Descriptions.Item label={t.requests.confirm.fulfilledAt}>
           {request.fulfilledAt
             ? dayjs(request.fulfilledAt).format("DD MMM YYYY HH:mm")
             : "-"}
         </Descriptions.Item>
         {request.notes && (
-          <Descriptions.Item label="Notes" span={2}>
+          <Descriptions.Item label={t.common.notes} span={2}>
             <pre className="whitespace-pre-wrap text-sm">{request.notes}</pre>
           </Descriptions.Item>
         )}
       </Descriptions>
 
       <div>
-        <h3 className="text-base font-semibold mb-2">Confirm Received Items</h3>
+        <h3 className="text-base font-semibold mb-2">{t.requests.confirm.confirmReceivedItems}</h3>
         <Table
           rowKey="id"
           columns={columns}
@@ -243,19 +245,19 @@ export default function ConfirmRequestPage() {
       {hasDiscrepancy && (
         <Alert
           type="warning"
-          message="Discrepancy Detected"
-          description="Some quantities don't match what was issued. Please document the reasons."
+          message={t.requests.confirm.discrepancyDetected}
+          description={t.requests.confirm.discrepancyDesc}
           showIcon
         />
       )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Confirmation Notes
+          {t.requests.confirm.confirmationNotes}
         </label>
         <Input.TextArea
           rows={2}
-          placeholder="Any notes about delivery..."
+          placeholder={t.requests.confirm.deliveryNotes}
           value={confirmNotes}
           onChange={(e) => setConfirmNotes(e.target.value)}
         />
@@ -266,7 +268,7 @@ export default function ConfirmRequestPage() {
           checked={hasDiscrepancy}
           disabled
         >
-          Report discrepancy (auto-detected from quantity mismatches)
+          {t.requests.confirm.reportDiscrepancy}
         </Checkbox>
       )}
 
@@ -278,7 +280,7 @@ export default function ConfirmRequestPage() {
           onClick={handleSubmit}
           loading={submitting}
         >
-          Confirm Receipt
+          {t.requests.confirm.confirmReceipt}
         </Button>
       </div>
     </div>

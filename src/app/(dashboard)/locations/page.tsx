@@ -6,6 +6,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { LocationTree } from "@/components/locations/location-tree";
 import { LocationFormModal } from "@/components/locations/location-form-modal";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 
 interface LocationData {
@@ -29,6 +30,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function LocationsPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const hasPermission = useUserStore((s) => s.hasPermission);
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,12 +63,12 @@ export default function LocationsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        message.success(editingLocation ? "Location updated" : "Location created");
+        message.success(editingLocation ? t.locations.locationUpdated : t.locations.locationCreated);
         setModalOpen(false);
         setEditingLocation(null);
         fetchLocations();
       } else {
-        message.error(json.error || "Failed");
+        message.error(json.error || t.common.failed);
       }
     } finally {
       setSubmitting(false);
@@ -77,10 +79,10 @@ export default function LocationsPage() {
     const res = await fetch(`/api/locations/${id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
-      message.success("Location deactivated");
+      message.success(t.locations.locationDeactivated);
       fetchLocations();
     } else {
-      message.error(json.error || "Failed");
+      message.error(json.error || t.common.failed);
     }
   };
 
@@ -90,16 +92,16 @@ export default function LocationsPage() {
     : locations.filter((l) => !l.parentId);
 
   const columns: ColumnsType<LocationData> = [
-    { title: "Code", dataIndex: "code", width: 120 },
-    { title: "Name", dataIndex: "name" },
+    { title: t.locations.columns.code, dataIndex: "code", width: 120 },
+    { title: t.locations.columns.name, dataIndex: "name" },
     {
-      title: "Type",
+      title: t.locations.columns.type,
       dataIndex: "type",
       width: 120,
       render: (type: string) => <Tag color={TYPE_COLORS[type] || "default"}>{type}</Tag>,
     },
     {
-      title: "Actions",
+      title: t.locations.columns.actions,
       width: 100,
       render: (_, record) => (
         <Space size="small">
@@ -116,7 +118,7 @@ export default function LocationsPage() {
           )}
           {hasPermission("location:delete") && (
             <Popconfirm
-              title="Deactivate this location?"
+              title={t.locations.deactivateConfirm}
               onConfirm={() => handleDelete(record.id)}
             >
               <Button type="text" size="small" danger icon={<DeleteOutlined />} />
@@ -130,7 +132,7 @@ export default function LocationsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Locations</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.locations.title}</h1>
         {hasPermission("location:create") && (
           <Button
             type="primary"
@@ -140,14 +142,14 @@ export default function LocationsPage() {
               setModalOpen(true);
             }}
           >
-            Add Location
+            {t.locations.addLocation}
           </Button>
         )}
       </div>
 
       <div className="flex gap-6">
         <div className="w-72 bg-white rounded-lg shadow p-4 shrink-0">
-          <h3 className="font-semibold text-gray-700 mb-3">Location Hierarchy</h3>
+          <h3 className="font-semibold text-gray-700 mb-3">{t.locations.locationHierarchy}</h3>
           {!loading && (
             <LocationTree
               locations={locations}
@@ -161,8 +163,8 @@ export default function LocationsPage() {
           <div className="p-4 border-b">
             <h3 className="font-semibold text-gray-700">
               {selectedId
-                ? `Children of: ${locations.find((l) => l.id === selectedId)?.name || ""}`
-                : "Root Locations"}
+                ? `${t.locations.childrenOf} ${locations.find((l) => l.id === selectedId)?.name || ""}`
+                : t.locations.rootLocations}
             </h3>
           </div>
           <Table

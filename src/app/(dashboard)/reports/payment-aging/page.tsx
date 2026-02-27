@@ -21,6 +21,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { exportToExcel } from "@/lib/export-excel";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -63,6 +64,7 @@ const BUCKET_TAG_COLORS: Record<string, string> = {
 
 export default function PaymentAgingReport() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [bucketFilter, _setBucketFilter] = useState<string>("");
@@ -72,9 +74,9 @@ export default function PaymentAgingReport() {
     const res = await fetch("/api/reports/payment-aging");
     const json = await res.json();
     if (json.success) setData(json.data);
-    else message.error("Failed to load report");
+    else message.error(t.reports.failedToLoad);
     setLoading(false);
-  }, [message]);
+  }, [message, t.reports.failedToLoad]);
 
   useEffect(() => {
     fetch_();
@@ -105,10 +107,10 @@ export default function PaymentAgingReport() {
   const totalOverdue = (overdue30?.total || 0) + (overdue60?.total || 0) + (overdue90?.total || 0);
 
   const columns: ColumnsType<Row> = [
-    { title: "PO #", dataIndex: "poNumber", width: 120 },
-    { title: "Supplier", dataIndex: "supplier", ellipsis: true },
+    { title: t.procurement.columns.poNumber, dataIndex: "poNumber", width: 120 },
+    { title: t.reports.supplier, dataIndex: "supplier", ellipsis: true },
     {
-      title: "Amount",
+      title: t.common.amount,
       dataIndex: "amount",
       width: 120,
       align: "right",
@@ -116,14 +118,14 @@ export default function PaymentAgingReport() {
       sorter: (a, b) => a.amount - b.amount,
     },
     {
-      title: "Due Date",
+      title: t.finance.payments.dueDate,
       dataIndex: "dueDate",
       width: 120,
       render: (v: string | null) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
       sorter: (a, b) => new Date(a.dueDate || 0).getTime() - new Date(b.dueDate || 0).getTime(),
     },
     {
-      title: "Days Overdue",
+      title: t.reports.daysOverdue,
       dataIndex: "daysOverdue",
       width: 120,
       align: "right",
@@ -135,7 +137,7 @@ export default function PaymentAgingReport() {
       ),
     },
     {
-      title: "Aging Bucket",
+      title: t.reports.agingBucket,
       dataIndex: "bucket",
       width: 130,
       filters: data?.byBucket.map((b) => ({ text: b.bucket, value: b.bucket })) || [],
@@ -154,7 +156,7 @@ export default function PaymentAgingReport() {
           icon={<ExclamationCircleOutlined />}
           message={
             <span>
-              <strong>${totalOverdue.toFixed(2)}</strong> in overdue payments require immediate attention
+              <strong>${totalOverdue.toFixed(2)}</strong> {t.reports.overdueAlert}
             </span>
           }
         />
@@ -164,7 +166,7 @@ export default function PaymentAgingReport() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#faad14" }}>
           <Statistic
-            title="Total Outstanding"
+            title={t.reports.totalOutstanding}
             value={data?.totalOutstanding || 0}
             precision={2}
             prefix={<DollarOutlined />}
@@ -172,11 +174,11 @@ export default function PaymentAgingReport() {
           />
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#52c41a" }}>
-          <Statistic title="Current (0-30)" value={current?.total || 0} precision={2} prefix={<DollarOutlined />} />
+          <Statistic title={t.reports.current0_30} value={current?.total || 0} precision={2} prefix={<DollarOutlined />} />
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#fa8c16" }}>
           <Statistic
-            title="31-60 Days"
+            title={t.reports.days31_60}
             value={overdue30?.total || 0}
             precision={2}
             prefix={<DollarOutlined />}
@@ -185,7 +187,7 @@ export default function PaymentAgingReport() {
         </Card>
         <Card size="small" className="border-l-4" style={{ borderLeftColor: "#ff4d4f" }}>
           <Statistic
-            title="90+ Days"
+            title={t.reports.days90Plus}
             value={overdue90?.total || 0}
             precision={2}
             prefix={<WarningOutlined />}
@@ -196,7 +198,7 @@ export default function PaymentAgingReport() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Distribution by Aging Bucket" size="small" styles={{ body: { padding: "12px" } }}>
+        <Card title={t.reports.distributionByAgingBucket} size="small" styles={{ body: { padding: "12px" } }}>
           {!data?.byBucket.length ? (
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
@@ -218,13 +220,13 @@ export default function PaymentAgingReport() {
                     <Cell key={i} fill={BUCKET_COLORS[b.bucket] || "#d9d9d9"} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Amount"]} />
+                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, t.common.amount]} />
               </PieChart>
             </ResponsiveContainer>
           )}
         </Card>
 
-        <Card title="Outstanding by Supplier" size="small" styles={{ body: { padding: "12px 12px 0" } }}>
+        <Card title={t.reports.outstandingBySupplier} size="small" styles={{ body: { padding: "12px 12px 0" } }}>
           {!data?.bySupplier.length ? (
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
@@ -237,7 +239,7 @@ export default function PaymentAgingReport() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" tickFormatter={(v) => `$${v.toFixed(0)}`} fontSize={11} />
                 <YAxis type="category" dataKey="name" width={100} fontSize={10} />
-                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Outstanding"]} />
+                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, t.reports.totalOutstanding]} />
                 <Bar dataKey="total" fill="#fa8c16" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -247,7 +249,7 @@ export default function PaymentAgingReport() {
 
       {/* Detail Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="By Aging Bucket" size="small">
+        <Card title={t.reports.byAgingBucket} size="small">
           <Table
             rowKey="bucket"
             dataSource={data?.byBucket || []}
@@ -255,25 +257,25 @@ export default function PaymentAgingReport() {
             size="small"
             columns={[
               {
-                title: "Bucket",
+                title: t.reports.bucket,
                 dataIndex: "bucket",
                 render: (v: string) => <Tag color={BUCKET_TAG_COLORS[v]}>{v}</Tag>,
               },
-              { title: "Count", dataIndex: "count", width: 80, align: "right" },
-              { title: "Total", dataIndex: "total", width: 130, align: "right", render: (v: number) => `$${v.toFixed(2)}` },
+              { title: t.reports.count, dataIndex: "count", width: 80, align: "right" },
+              { title: t.common.total, dataIndex: "total", width: 130, align: "right", render: (v: number) => `$${v.toFixed(2)}` },
             ]}
           />
         </Card>
-        <Card title="By Supplier" size="small">
+        <Card title={t.reports.bySupplier} size="small">
           <Table
             rowKey="code"
             dataSource={data?.bySupplier || []}
             pagination={false}
             size="small"
             columns={[
-              { title: "Supplier", dataIndex: "name", ellipsis: true },
-              { title: "Count", dataIndex: "count", width: 80, align: "right" },
-              { title: "Total", dataIndex: "total", width: 130, align: "right", render: (v: number) => `$${v.toFixed(2)}` },
+              { title: t.reports.supplier, dataIndex: "name", ellipsis: true },
+              { title: t.reports.count, dataIndex: "count", width: 80, align: "right" },
+              { title: t.common.total, dataIndex: "total", width: 130, align: "right", render: (v: number) => `$${v.toFixed(2)}` },
             ]}
           />
         </Card>
@@ -281,7 +283,7 @@ export default function PaymentAgingReport() {
 
       {/* All Outstanding Payments */}
       <Card
-        title="All Outstanding Payments"
+        title={t.reports.allOutstandingPayments}
         size="small"
         extra={
           <Button
@@ -290,17 +292,17 @@ export default function PaymentAgingReport() {
             size="small"
             onClick={() =>
               data &&
-              exportToExcel("Payment Aging", [
-                { header: "PO #", key: "poNumber", width: 15 },
-                { header: "Supplier", key: "supplier", width: 25 },
-                { header: "Amount", key: "amount", width: 15 },
-                { header: "Due Date", key: "dueDate", width: 15 },
-                { header: "Days Overdue", key: "daysOverdue", width: 15 },
-                { header: "Bucket", key: "bucket", width: 15 },
+              exportToExcel(t.reports.paymentAging, [
+                { header: t.procurement.columns.poNumber, key: "poNumber", width: 15 },
+                { header: t.reports.supplier, key: "supplier", width: 25 },
+                { header: t.common.amount, key: "amount", width: 15 },
+                { header: t.finance.payments.dueDate, key: "dueDate", width: 15 },
+                { header: t.reports.daysOverdue, key: "daysOverdue", width: 15 },
+                { header: t.reports.bucket, key: "bucket", width: 15 },
               ], data.rows)
             }
           >
-            Export
+            {t.common.export}
           </Button>
         }
       >
@@ -308,7 +310,7 @@ export default function PaymentAgingReport() {
           rowKey="id"
           columns={columns}
           dataSource={filteredRows}
-          pagination={{ pageSize: 20, showTotal: (t) => `${t} payments` }}
+          pagination={{ pageSize: 20, showTotal: (total) => `${total} ${t.common.payments}` }}
           size="small"
           scroll={{ x: 700 }}
         />

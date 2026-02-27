@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useUserStore } from "@/store/user";
+import { useTranslation } from "@/lib/i18n";
 import dayjs from "dayjs";
 import type { ColumnsType } from "antd/es/table";
 
@@ -65,22 +66,23 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "red",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Draft",
-  PENDING_APPROVAL: "Pending Approval",
-  APPROVED: "Approved",
-  SENT: "Sent",
-  PARTIALLY_RECEIVED: "Partially Received",
-  RECEIVED: "Received",
-  CANCELLED: "Cancelled",
-};
-
 export default function PODetailPage() {
   const { message } = App.useApp();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const user = useUserStore((s) => s.user);
   const hasPermission = useUserStore((s) => s.hasPermission);
+  const { t } = useTranslation();
+
+  const STATUS_LABELS: Record<string, string> = {
+    DRAFT: t.procurement.statusLabels.DRAFT,
+    PENDING_APPROVAL: t.procurement.statusLabels.PENDING_APPROVAL,
+    APPROVED: t.procurement.statusLabels.APPROVED,
+    SENT: t.procurement.statusLabels.SENT,
+    PARTIALLY_RECEIVED: t.procurement.statusLabels.PARTIALLY_RECEIVED,
+    RECEIVED: t.procurement.statusLabels.RECEIVED,
+    CANCELLED: t.procurement.statusLabels.CANCELLED,
+  };
 
   const [po, setPO] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,10 +97,10 @@ export default function PODetailPage() {
     if (json.success) {
       setPO(json.data);
     } else {
-      message.error("Failed to load purchase order");
+      message.error(t.procurement.failedToLoad);
     }
     setLoading(false);
-  }, [id, message]);
+  }, [id, message, t.procurement.failedToLoad]);
 
   useEffect(() => {
     fetchPO();
@@ -110,13 +112,13 @@ export default function PODetailPage() {
       const res = await fetch(`/api/purchase-orders/${id}/submit`, { method: "POST" });
       const json = await res.json();
       if (json.success) {
-        message.success("PO submitted for approval");
+        message.success(t.procurement.poSubmitted);
         fetchPO();
       } else {
-        message.error(json.error || "Failed to submit");
+        message.error(json.error || t.procurement.failedToSubmit);
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setActionLoading(false);
   };
@@ -131,13 +133,13 @@ export default function PODetailPage() {
       });
       const json = await res.json();
       if (json.success) {
-        message.success("PO approved");
+        message.success(t.procurement.poApproved);
         fetchPO();
       } else {
-        message.error(json.error || "Failed to approve");
+        message.error(json.error || t.procurement.failedToApprove);
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setActionLoading(false);
   };
@@ -152,15 +154,15 @@ export default function PODetailPage() {
       });
       const json = await res.json();
       if (json.success) {
-        message.success("PO rejected");
+        message.success(t.procurement.poRejected);
         setRejectModalOpen(false);
         setRejectReason("");
         fetchPO();
       } else {
-        message.error(json.error || "Failed to reject");
+        message.error(json.error || t.procurement.failedToReject);
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setActionLoading(false);
   };
@@ -173,13 +175,13 @@ export default function PODetailPage() {
       });
       const json = await res.json();
       if (json.success) {
-        message.success("PO marked as sent to supplier");
+        message.success(t.procurement.poMarkedSent);
         fetchPO();
       } else {
-        message.error(json.error || "Failed to mark as sent");
+        message.error(json.error || t.procurement.failedToMarkSent);
       }
     } catch {
-      message.error("Network error");
+      message.error(t.common.networkError);
     }
     setActionLoading(false);
   };
@@ -193,7 +195,7 @@ export default function PODetailPage() {
   }
 
   if (!po) {
-    return <div className="text-center text-gray-500 mt-12">Purchase order not found</div>;
+    return <div className="text-center text-gray-500 mt-12">{t.procurement.notFound}</div>;
   }
 
   const canApprove =
@@ -202,26 +204,26 @@ export default function PODetailPage() {
     user?.id !== po.createdBy.id;
 
   const lineColumns: ColumnsType<POLine> = [
-    { title: "Item Code", dataIndex: ["item", "code"], width: 120 },
-    { title: "Item Name", dataIndex: ["item", "name"], ellipsis: true },
-    { title: "UOM", dataIndex: ["item", "uom"], width: 70 },
-    { title: "Qty", dataIndex: "quantity", width: 80, align: "right" },
+    { title: t.procurement.columns.itemCode, dataIndex: ["item", "code"], width: 120 },
+    { title: t.procurement.columns.itemName, dataIndex: ["item", "name"], ellipsis: true },
+    { title: t.procurement.columns.uom, dataIndex: ["item", "uom"], width: 70 },
+    { title: t.procurement.columns.qty, dataIndex: "quantity", width: 80, align: "right" },
     {
-      title: "Unit Cost",
+      title: t.procurement.columns.unitCost,
       dataIndex: "unitCost",
       width: 110,
       align: "right",
       render: (v: number) => v.toFixed(2),
     },
     {
-      title: "Total",
+      title: t.procurement.columns.total,
       dataIndex: "totalCost",
       width: 120,
       align: "right",
       render: (v: number) => v.toFixed(2),
     },
     {
-      title: "Received",
+      title: t.procurement.columns.received,
       dataIndex: "receivedQty",
       width: 90,
       align: "right",
@@ -241,38 +243,38 @@ export default function PODetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <Card className="lg:col-span-2">
           <Descriptions column={2} size="small">
-            <Descriptions.Item label="Supplier">
+            <Descriptions.Item label={t.procurement.details.supplier}>
               {po.supplier.code} - {po.supplier.name}
             </Descriptions.Item>
-            <Descriptions.Item label="Total Amount">
+            <Descriptions.Item label={t.procurement.details.totalAmount}>
               {po.currency} {po.totalAmount.toFixed(2)}
             </Descriptions.Item>
-            <Descriptions.Item label="Created By">
+            <Descriptions.Item label={t.procurement.details.createdBy}>
               {po.createdBy.fullName}
             </Descriptions.Item>
-            <Descriptions.Item label="Created">
+            <Descriptions.Item label={t.procurement.details.created}>
               {dayjs(po.createdAt).format("DD MMM YYYY HH:mm")}
             </Descriptions.Item>
-            <Descriptions.Item label="Expected Delivery">
+            <Descriptions.Item label={t.procurement.details.expectedDelivery}>
               {po.expectedDate
                 ? dayjs(po.expectedDate).format("DD MMM YYYY")
                 : "-"}
             </Descriptions.Item>
             {po.approvedBy && (
-              <Descriptions.Item label="Approved By">
-                {po.approvedBy.fullName} on{" "}
+              <Descriptions.Item label={t.procurement.details.approvedBy}>
+                {po.approvedBy.fullName} {t.common.on}{" "}
                 {po.approvedAt ? dayjs(po.approvedAt).format("DD MMM YYYY HH:mm") : ""}
               </Descriptions.Item>
             )}
             {po.notes && (
-              <Descriptions.Item label="Notes" span={2}>
+              <Descriptions.Item label={t.procurement.details.notes} span={2}>
                 {po.notes}
               </Descriptions.Item>
             )}
           </Descriptions>
         </Card>
 
-        <Card title="Actions">
+        <Card title={t.procurement.details.actions}>
           <Space direction="vertical" className="w-full">
             {po.status === "DRAFT" && hasPermission("po:create") && (
               <>
@@ -280,11 +282,11 @@ export default function PODetailPage() {
                   block
                   onClick={() => router.push(`/procurement/create?edit=${po.id}`)}
                 >
-                  Edit PO
+                  {t.procurement.editPO}
                 </Button>
-                <Popconfirm title="Submit for approval?" onConfirm={handleSubmit}>
+                <Popconfirm title={t.procurement.submitConfirm} onConfirm={handleSubmit}>
                   <Button block type="primary" loading={actionLoading}>
-                    Submit for Approval
+                    {t.procurement.submitForApproval}
                   </Button>
                 </Popconfirm>
               </>
@@ -298,7 +300,7 @@ export default function PODetailPage() {
                   onClick={handleApprove}
                   loading={actionLoading}
                 >
-                  Approve
+                  {t.common.approve}
                 </Button>
                 <Button
                   block
@@ -306,20 +308,20 @@ export default function PODetailPage() {
                   onClick={() => setRejectModalOpen(true)}
                   loading={actionLoading}
                 >
-                  Reject
+                  {t.common.reject}
                 </Button>
               </>
             )}
             {po.status === "APPROVED" && hasPermission("po:edit") && (
               <Button block type="primary" onClick={handleMarkSent} loading={actionLoading}>
-                Mark as Sent to Supplier
+                {t.procurement.markAsSent}
               </Button>
             )}
           </Space>
         </Card>
       </div>
 
-      <Card title="Line Items">
+      <Card title={t.procurement.lineItems}>
         <Table
           rowKey="id"
           columns={lineColumns}
@@ -329,7 +331,7 @@ export default function PODetailPage() {
           summary={() => (
             <Table.Summary.Row>
               <Table.Summary.Cell index={0} colSpan={5} align="right">
-                <strong>Total</strong>
+                <strong>{t.common.total}</strong>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={1} align="right">
                 <strong>{po.totalAmount.toFixed(2)}</strong>
@@ -341,7 +343,7 @@ export default function PODetailPage() {
       </Card>
 
       <Modal
-        title="Reject Purchase Order"
+        title={t.procurement.rejectTitle}
         open={rejectModalOpen}
         onOk={handleReject}
         onCancel={() => {
@@ -351,13 +353,13 @@ export default function PODetailPage() {
         confirmLoading={actionLoading}
       >
         <div className="mb-2 text-gray-600">
-          Please provide a reason for rejecting this PO:
+          {t.procurement.rejectPrompt}
         </div>
         <Input.TextArea
           rows={3}
           value={rejectReason}
           onChange={(e) => setRejectReason(e.target.value)}
-          placeholder="Reason for rejection..."
+          placeholder={t.procurement.rejectPlaceholder}
         />
       </Modal>
     </div>

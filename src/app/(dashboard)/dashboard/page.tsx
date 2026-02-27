@@ -46,6 +46,7 @@ import {
 import Link from "next/link";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useTranslation } from "@/lib/i18n";
 
 dayjs.extend(relativeTime);
 
@@ -105,16 +106,6 @@ interface DashboardData {
   }[];
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Draft",
-  PENDING_APPROVAL: "Pending",
-  APPROVED: "Approved",
-  SENT: "Sent",
-  PARTIALLY_RECEIVED: "Partial",
-  RECEIVED: "Received",
-  CANCELLED: "Cancelled",
-};
-
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#d9d9d9",
   PENDING_APPROVAL: "#faad14",
@@ -148,6 +139,7 @@ const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
 export default function DashboardPage() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -165,15 +157,15 @@ export default function DashboardPage() {
           setData(json.data);
           setLastRefresh(new Date());
         } else {
-          message.error("Failed to load dashboard");
+          message.error(t.dashboard.failedToLoad);
         }
       } catch {
-        message.error("Network error");
+        message.error(t.common.networkError);
       }
       setLoading(false);
       setRefreshing(false);
     },
-    [message]
+    [message, t]
   );
 
   useEffect(() => {
@@ -219,10 +211,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.dashboard.title}</h1>
           {lastRefresh && (
             <p className="text-xs text-gray-400 mt-0.5">
-              Last updated {dayjs(lastRefresh).fromNow()}
+              {t.common.lastUpdated} {dayjs(lastRefresh).fromNow()}
             </p>
           )}
         </div>
@@ -231,7 +223,7 @@ export default function DashboardPage() {
           onClick={() => fetchData(true)}
           loading={refreshing}
         >
-          Refresh
+          {t.common.refresh}
         </Button>
       </div>
 
@@ -245,7 +237,7 @@ export default function DashboardPage() {
           <Statistic
             title={
               <span className="text-gray-500 text-xs font-medium uppercase tracking-wide">
-                Total Inventory Value
+                {t.dashboard.totalInventoryValue}
               </span>
             }
             value={kpis.totalInventoryValue}
@@ -266,7 +258,7 @@ export default function DashboardPage() {
             <Statistic
               title={
                 <span className="text-gray-500 text-xs font-medium uppercase tracking-wide">
-                  Pending Approvals
+                  {t.dashboard.pendingApprovals}
                 </span>
               }
               value={kpis.pendingApprovals}
@@ -278,7 +270,7 @@ export default function DashboardPage() {
               }}
               suffix={
                 <span className="text-xs text-gray-400 ml-1 font-normal">
-                  ({kpis.pendingPOs} POs, {kpis.pendingTransfers} transfers)
+                  ({kpis.pendingPOs} {t.dashboard.poCount}, {kpis.pendingTransfers} {t.dashboard.transferCount})
                 </span>
               }
             />
@@ -306,7 +298,7 @@ export default function DashboardPage() {
             <Statistic
               title={
                 <span className="text-gray-500 text-xs font-medium uppercase tracking-wide">
-                  Low Stock Alerts
+                  {t.dashboard.lowStockAlerts}
                 </span>
               }
               value={kpis.lowStockCount}
@@ -336,7 +328,7 @@ export default function DashboardPage() {
           <Statistic
             title={
               <span className="text-gray-500 text-xs font-medium uppercase tracking-wide">
-                Outstanding Payables
+                {t.dashboard.outstandingPayables}
               </span>
             }
             value={kpis.outstandingPayables}
@@ -350,7 +342,7 @@ export default function DashboardPage() {
             }}
             suffix={
               <span className="text-xs text-gray-400 ml-1 font-normal">
-                ({kpis.outstandingPaymentCount} payments)
+                ({kpis.outstandingPaymentCount} {t.dashboard.paymentCount})
               </span>
             }
           />
@@ -361,13 +353,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Items by Value - Bar Chart */}
         <Card
-          title="Top Items by Value"
+          title={t.dashboard.topItemsByValue}
           size="small"
           styles={{ body: { padding: "12px 12px 0" } }}
         >
           {charts.topItemsByValue.length === 0 ? (
             <Empty
-              description="No inventory data yet"
+              description={t.dashboard.noInventoryData}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ) : (
@@ -393,7 +385,7 @@ export default function DashboardPage() {
                 <RTooltip
                   formatter={(value) => [
                     `$${Number(value).toFixed(2)}`,
-                    "Value",
+                    t.dashboard.value,
                   ]}
                   labelFormatter={(label) => {
                     const item = charts.topItemsByValue.find(
@@ -417,13 +409,13 @@ export default function DashboardPage() {
 
         {/* Supplier Spend - Pie Chart */}
         <Card
-          title="Supplier Spend (Last 30 Days)"
+          title={t.dashboard.supplierSpend}
           size="small"
           styles={{ body: { padding: "12px" } }}
         >
           {charts.supplierSpend.length === 0 ? (
             <Empty
-              description="No purchase data yet"
+              description={t.dashboard.noPurchaseData}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ) : (
@@ -454,7 +446,7 @@ export default function DashboardPage() {
                 <RTooltip
                   formatter={(value) => [
                     `$${Number(value).toFixed(2)}`,
-                    "Spend",
+                    t.dashboard.spend,
                   ]}
                 />
               </PieChart>
@@ -464,13 +456,13 @@ export default function DashboardPage() {
 
         {/* PO Status Breakdown - Bar Chart */}
         <Card
-          title="Purchase Orders by Status"
+          title={t.dashboard.posByStatus}
           size="small"
           styles={{ body: { padding: "12px 12px 0" } }}
         >
           {charts.posByStatus.length === 0 ? (
             <Empty
-              description="No purchase orders yet"
+              description={t.dashboard.noPurchaseOrders}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ) : (
@@ -478,7 +470,7 @@ export default function DashboardPage() {
               <BarChart
                 data={charts.posByStatus.map((po) => ({
                   ...po,
-                  label: STATUS_LABELS[po.status] || po.status,
+                  label: t.dashboard.statusLabels[po.status as keyof typeof t.dashboard.statusLabels] || po.status,
                 }))}
                 margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
               >
@@ -488,13 +480,13 @@ export default function DashboardPage() {
                 <RTooltip
                   formatter={(value, name) => [
                     name === "count"
-                      ? `${value} orders`
+                      ? `${value} ${t.common.orders}`
                       : `$${Number(value).toFixed(2)}`,
-                    name === "count" ? "Count" : "Total Value",
+                    name === "count" ? t.dashboard.count : t.dashboard.totalValue,
                   ]}
                 />
                 <Legend fontSize={11} />
-                <Bar dataKey="count" name="Count" fill="#1890ff" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="count" name={t.dashboard.count} fill="#1890ff" radius={[4, 4, 0, 0]}>
                   {charts.posByStatus.map((po) => (
                     <Cell
                       key={po.status}
@@ -509,21 +501,21 @@ export default function DashboardPage() {
 
         {/* Recent Transactions - Line Chart */}
         <Card
-          title="Recent Inventory Movements"
+          title={t.dashboard.recentMovements}
           size="small"
           extra={
             <Link
               href="/reports/transaction-history"
               className="text-xs text-blue-500"
             >
-              View All <RightOutlined />
+              {t.common.viewAll} <RightOutlined />
             </Link>
           }
           styles={{ body: { padding: "12px" } }}
         >
           {recentTransactions.length === 0 ? (
             <Empty
-              description="No transactions yet"
+              description={t.dashboard.noTransactions}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ) : (
@@ -582,7 +574,7 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-2">
                   <ExclamationCircleOutlined className="text-red-500" />
                   <span>
-                    Critical Low Stock
+                    {t.dashboard.criticalLowStock}
                   </span>
                   <Badge
                     count={alerts.lowStock.length}
@@ -595,7 +587,7 @@ export default function DashboardPage() {
                   href="/reports/stock-movement"
                   className="text-xs text-blue-500"
                 >
-                  View Report <RightOutlined />
+                  {t.common.viewReport} <RightOutlined />
                 </Link>
               }
             >
@@ -612,15 +604,15 @@ export default function DashboardPage() {
                   }
                   description={
                     <span className="text-xs">
-                      {item.location}: <strong>{item.quantity}</strong> remaining
-                      (reorder at {item.reorderPoint})
+                      {item.location}: <strong>{item.quantity}</strong> {t.common.remaining}
+                      {" "}({t.common.reorderAt} {item.reorderPoint})
                     </span>
                   }
                 />
               ))}
               {alerts.lowStock.length > 5 && (
                 <p className="text-xs text-gray-400 mt-2 text-center">
-                  +{alerts.lowStock.length - 5} more items
+                  +{alerts.lowStock.length - 5} {t.common.moreItems}
                 </p>
               )}
             </Card>
@@ -632,7 +624,7 @@ export default function DashboardPage() {
               title={
                 <span className="flex items-center gap-2">
                   <ClockCircleOutlined className="text-orange-500" />
-                  <span>Overdue Payments</span>
+                  <span>{t.dashboard.overduePayments}</span>
                   <Badge
                     count={alerts.overduePayments.length}
                     style={{ backgroundColor: "#fa8c16" }}
@@ -644,7 +636,7 @@ export default function DashboardPage() {
                   href="/reports/payment-aging"
                   className="text-xs text-blue-500"
                 >
-                  View Report <RightOutlined />
+                  {t.common.viewReport} <RightOutlined />
                 </Link>
               }
             >
@@ -661,7 +653,7 @@ export default function DashboardPage() {
                   }
                   description={
                     <span className="text-xs">
-                      <strong>${p.amount.toFixed(2)}</strong> due{" "}
+                      <strong>${p.amount.toFixed(2)}</strong> {t.dashboard.due}{" "}
                       {dayjs(p.dueDate).format("DD MMM YYYY")} (
                       {dayjs(p.dueDate).fromNow()})
                     </span>
@@ -683,23 +675,20 @@ export default function DashboardPage() {
           icon={<ClockCircleOutlined />}
           message={
             <span className="flex items-center gap-4 flex-wrap">
-              <span className="font-medium">Pending Actions:</span>
+              <span className="font-medium">{t.dashboard.pendingActions}</span>
               {kpis.pendingPOs > 0 && (
                 <Link href="/procurement" className="text-blue-600">
-                  {kpis.pendingPOs} PO{kpis.pendingPOs > 1 ? "s" : ""} to
-                  approve
+                  {kpis.pendingPOs} {t.dashboard.poCount} {t.dashboard.posToApprove}
                 </Link>
               )}
               {kpis.pendingTransfers > 0 && (
                 <Link href="/transfers/pending" className="text-blue-600">
-                  {kpis.pendingTransfers} transfer
-                  {kpis.pendingTransfers > 1 ? "s" : ""} to approve
+                  {kpis.pendingTransfers} {t.dashboard.transferCount} {t.dashboard.transfersToApprove}
                 </Link>
               )}
               {kpis.pendingRequests > 0 && (
                 <Link href="/requests/fulfill" className="text-blue-600">
-                  {kpis.pendingRequests} request
-                  {kpis.pendingRequests > 1 ? "s" : ""} to fulfill
+                  {kpis.pendingRequests} {t.dashboard.requestsToFulfill}
                 </Link>
               )}
             </span>
@@ -712,7 +701,7 @@ export default function DashboardPage() {
         title={
           <span className="flex items-center gap-2">
             <FileTextOutlined />
-            Recent Activity
+            {t.dashboard.recentActivity}
           </span>
         }
         size="small"
@@ -721,13 +710,13 @@ export default function DashboardPage() {
             href="/admin/audit-logs"
             className="text-xs text-blue-500"
           >
-            View All <RightOutlined />
+            {t.common.viewAll} <RightOutlined />
           </Link>
         }
       >
         {recentActivity.length === 0 ? (
           <Empty
-            description="No recent activity"
+            description={t.dashboard.noRecentActivity}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
@@ -741,11 +730,11 @@ export default function DashboardPage() {
                   <div>
                     <Tag className="mr-1">{log.action}</Tag>
                     <span className="text-sm text-gray-600">
-                      on{" "}
+                      {t.common.on}{" "}
                       <span className="font-medium">{log.entityType}</span>
                     </span>
                     <span className="text-xs text-gray-400 ml-2">
-                      by {log.user}
+                      {t.common.by} {log.user}
                     </span>
                   </div>
                   <Tooltip

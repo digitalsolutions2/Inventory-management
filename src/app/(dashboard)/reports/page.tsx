@@ -10,59 +10,56 @@ import {
   TeamOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-
-const reports = [
-  {
-    title: "Inventory Valuation",
-    description:
-      "View current inventory value by location and category with cost analysis",
-    href: "/reports/inventory-valuation",
-    icon: <DollarOutlined style={{ fontSize: 28, color: "#1890ff" }} />,
-    color: "#e6f7ff",
-  },
-  {
-    title: "Purchase Summary",
-    description:
-      "Analyze purchase spending by supplier, category, and time period",
-    href: "/reports/purchase-summary",
-    icon: <ShoppingCartOutlined style={{ fontSize: 28, color: "#52c41a" }} />,
-    color: "#f6ffed",
-  },
-  {
-    title: "Payment Aging",
-    description:
-      "Track outstanding payments with aging buckets and overdue alerts",
-    href: "/reports/payment-aging",
-    icon: <ClockCircleOutlined style={{ fontSize: 28, color: "#faad14" }} />,
-    color: "#fffbe6",
-  },
-  {
-    title: "Transaction History",
-    description:
-      "Complete log of all inventory movements with advanced filters",
-    href: "/reports/transaction-history",
-    icon: <SwapOutlined style={{ fontSize: 28, color: "#722ed1" }} />,
-    color: "#f9f0ff",
-  },
-  {
-    title: "Stock Movement",
-    description:
-      "Identify slow-moving and fast-moving items with turnover analysis",
-    href: "/reports/stock-movement",
-    icon: <BarChartOutlined style={{ fontSize: 28, color: "#ff4d4f" }} />,
-    color: "#fff1f0",
-  },
-  {
-    title: "Supplier Performance",
-    description:
-      "Score suppliers on delivery, quality, and pricing performance",
-    href: "/reports/supplier-performance",
-    icon: <TeamOutlined style={{ fontSize: 28, color: "#13c2c2" }} />,
-    color: "#e6fffb",
-  },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
+
+  const reports = [
+    {
+      title: t.reports.inventoryValuation,
+      description: t.reports.inventoryValuationDesc,
+      href: "/reports/inventory-valuation",
+      icon: <DollarOutlined style={{ fontSize: 28, color: "#1890ff" }} />,
+      color: "#e6f7ff",
+    },
+    {
+      title: t.reports.purchaseSummary,
+      description: t.reports.purchaseSummaryDesc,
+      href: "/reports/purchase-summary",
+      icon: <ShoppingCartOutlined style={{ fontSize: 28, color: "#52c41a" }} />,
+      color: "#f6ffed",
+    },
+    {
+      title: t.reports.paymentAging,
+      description: t.reports.paymentAgingDesc,
+      href: "/reports/payment-aging",
+      icon: <ClockCircleOutlined style={{ fontSize: 28, color: "#faad14" }} />,
+      color: "#fffbe6",
+    },
+    {
+      title: t.reports.transactionHistory,
+      description: t.reports.transactionHistoryDesc,
+      href: "/reports/transaction-history",
+      icon: <SwapOutlined style={{ fontSize: 28, color: "#722ed1" }} />,
+      color: "#f9f0ff",
+    },
+    {
+      title: t.reports.stockMovement,
+      description: t.reports.stockMovementDesc,
+      href: "/reports/stock-movement",
+      icon: <BarChartOutlined style={{ fontSize: 28, color: "#ff4d4f" }} />,
+      color: "#fff1f0",
+    },
+    {
+      title: t.reports.supplierPerformance,
+      description: t.reports.supplierPerformanceDesc,
+      href: "/reports/supplier-performance",
+      icon: <TeamOutlined style={{ fontSize: 28, color: "#13c2c2" }} />,
+      color: "#e6fffb",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
       {reports.map((report) => (
@@ -87,7 +84,7 @@ export default function ReportsPage() {
             </p>
             <Link href={report.href}>
               <Button type="primary" block>
-                View Report
+                {t.common.viewReport}
               </Button>
             </Link>
           </div>

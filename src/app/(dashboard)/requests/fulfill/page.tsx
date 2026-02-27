@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Table, Button, Tag, App, Empty } from "antd";
 import { CheckSquareOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 
@@ -19,16 +20,10 @@ interface RequestRecord {
   _count: { lines: number };
 }
 
-const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
-  PENDING: { color: "orange", label: "Pending Fulfillment" },
-  ISSUED: { color: "blue", label: "Issued" },
-  CONFIRMED: { color: "green", label: "Confirmed" },
-  CANCELLED: { color: "red", label: "Cancelled" },
-};
-
 export default function FulfillQueuePage() {
   const { message } = App.useApp();
   const router = useRouter();
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,39 +34,47 @@ export default function FulfillQueuePage() {
     if (json.success) {
       setRequests(json.data.data || []);
     } else {
-      message.error("Failed to load requests");
+      message.error(t.requests.fulfill.failedToLoad);
     }
     setLoading(false);
-  }, [message]);
+  }, [message, t]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
   const columns: ColumnsType<RequestRecord> = [
-    { title: "Request #", dataIndex: "requestNumber", width: 130 },
+    { title: t.requests.fulfill.columns.requestNumber, dataIndex: "requestNumber", width: 130 },
     {
-      title: "Status",
+      title: t.common.status,
       dataIndex: "status",
       width: 160,
       render: (status: string) => {
-        const config = STATUS_CONFIG[status] || { color: "default", label: status };
-        return <Tag color={config.color}>{config.label}</Tag>;
+        const statusKey = status as keyof typeof t.requests.statusLabels;
+        const label = t.requests.statusLabels[statusKey] || status;
+        const colorMap: Record<string, string> = {
+          PENDING: "orange",
+          APPROVED: "blue",
+          FULFILLED: "blue",
+          COMPLETED: "green",
+          CANCELLED: "red",
+        };
+        return <Tag color={colorMap[status] || "default"}>{label}</Tag>;
       },
     },
     {
-      title: "Requested By",
+      title: t.requests.fulfill.columns.requestedBy,
       dataIndex: ["createdBy", "fullName"],
       width: 150,
     },
     {
-      title: "Items",
+      title: t.requests.fulfill.columns.items,
       dataIndex: ["_count", "lines"],
       width: 70,
       align: "center",
     },
     {
-      title: "Created",
+      title: t.requests.fulfill.columns.date,
       dataIndex: "createdAt",
       width: 150,
       render: (v: string) => dayjs(v).format("DD MMM YYYY HH:mm"),
@@ -86,14 +89,14 @@ export default function FulfillQueuePage() {
           icon={<CheckSquareOutlined />}
           onClick={() => router.push(`/requests/fulfill/${record.id}`)}
         >
-          Fulfill
+          {t.requests.fulfill.fulfillRequest}
         </Button>
       ),
     },
   ];
 
   if (requests.length === 0 && !loading) {
-    return <Empty description="No pending requests to fulfill" />;
+    return <Empty description={t.requests.fulfill.noPendingRequests} />;
   }
 
   return (

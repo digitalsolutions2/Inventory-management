@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const tabs = [
-  { label: "Procurement", href: "/receiving/procurement" },
-  { label: "QC Inspection", href: "/receiving/qc" },
-  { label: "Warehouse", href: "/receiving/warehouse" },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export default function ReceivingLayout({
   children,
@@ -15,11 +10,18 @@ export default function ReceivingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const tabs = [
+    { label: t.receiving.procurementTab, href: "/receiving/procurement" },
+    { label: t.receiving.qcTab, href: "/receiving/qc" },
+    { label: t.receiving.warehouseTab, href: "/receiving/warehouse" },
+  ];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Inbound Receiving</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.receiving.title}</h1>
       </div>
       <div className="bg-white rounded-lg shadow">
         <div className="border-b px-4 flex gap-1">
