@@ -82,6 +82,7 @@ export const ar: Dictionary = {
     finance: "المالية",
     reports: "التقارير",
     auditLogs: "سجل المراجعة",
+    inventory: "المخزون",
   },
   breadcrumbs: {
     dashboard: "لوحة التحكم",
@@ -979,6 +980,27 @@ export const ar: Dictionary = {
     transferCreated: "تم إنشاء التحويل!",
     awaitingApproval: "بانتظار الموافقة.",
     readyForFulfillment: "جاهز للتنفيذ.",
+  },
+  inventory: {
+    title: "نظرة عامة على المخزون",
+    searchPlaceholder: "بحث عن الأصناف...",
+    allLocations: "جميع المواقع",
+    stockStatus: "حالة المخزون",
+    outOfStock: "نفذ المخزون",
+    lowStock: "مخزون منخفض",
+    ok: "متوفر",
+    totalValue: "القيمة الإجمالية",
+    avgCost: "متوسط التكلفة",
+    columns: {
+      itemCode: "رمز الصنف",
+      itemName: "اسم الصنف",
+      location: "الموقع",
+      uom: "الوحدة",
+      quantity: "الكمية",
+      avgCost: "متوسط التكلفة",
+      totalValue: "القيمة الإجمالية",
+      stockStatus: "حالة المخزون",
+    },
   },
   admin: {
     auditLogs: {

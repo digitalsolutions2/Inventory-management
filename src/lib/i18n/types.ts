@@ -83,6 +83,7 @@ export interface Dictionary {
     finance: string;
     reports: string;
     auditLogs: string;
+    inventory: string;
   };
   breadcrumbs: {
     dashboard: string;
@@ -968,6 +969,27 @@ export interface Dictionary {
     transferCreated: string;
     awaitingApproval: string;
     readyForFulfillment: string;
+  };
+  inventory: {
+    title: string;
+    searchPlaceholder: string;
+    allLocations: string;
+    stockStatus: string;
+    outOfStock: string;
+    lowStock: string;
+    ok: string;
+    totalValue: string;
+    avgCost: string;
+    columns: {
+      itemCode: string;
+      itemName: string;
+      location: string;
+      uom: string;
+      quantity: string;
+      avgCost: string;
+      totalValue: string;
+      stockStatus: string;
+    };
   };
   admin: {
     auditLogs: {

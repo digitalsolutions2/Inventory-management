@@ -82,6 +82,7 @@ export const en: Dictionary = {
     finance: "Finance",
     reports: "Reports",
     auditLogs: "Audit Logs",
+    inventory: "Inventory",
   },
   breadcrumbs: {
     dashboard: "Dashboard",
@@ -979,6 +980,27 @@ export const en: Dictionary = {
     transferCreated: "Transfer created!",
     awaitingApproval: "Awaiting approval.",
     readyForFulfillment: "Ready for fulfillment.",
+  },
+  inventory: {
+    title: "Inventory Overview",
+    searchPlaceholder: "Search items...",
+    allLocations: "All Locations",
+    stockStatus: "Stock Status",
+    outOfStock: "Out of Stock",
+    lowStock: "Low Stock",
+    ok: "OK",
+    totalValue: "Total Value",
+    avgCost: "Avg Cost",
+    columns: {
+      itemCode: "Item Code",
+      itemName: "Item Name",
+      location: "Location",
+      uom: "UOM",
+      quantity: "Quantity",
+      avgCost: "Avg Cost",
+      totalValue: "Total Value",
+      stockStatus: "Stock Status",
+    },
   },
   admin: {
     auditLogs: {

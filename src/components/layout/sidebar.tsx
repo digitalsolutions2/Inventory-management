@@ -17,6 +17,7 @@ export function Sidebar({ userContext }: SidebarProps) {
     { name: t.nav.dashboard, href: "/dashboard", icon: "📊" },
     { name: t.nav.items, href: "/items", icon: "📦" },
     { name: t.nav.locations, href: "/locations", icon: "📍" },
+    { name: t.nav.inventory, href: "/inventory", icon: "🗃️" },
     { name: t.nav.suppliers, href: "/suppliers", icon: "🏭" },
     { name: t.nav.purchaseOrders, href: "/procurement", icon: "📋" },
     { name: t.nav.receiving, href: "/receiving", icon: "📥" },
