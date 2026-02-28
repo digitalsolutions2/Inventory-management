@@ -53,10 +53,10 @@ export function FoodicsMappingModal({
   async function loadItems() {
     setLoadingItems(true);
     try {
-      const res = await fetch("/api/items?all=true");
+      const res = await fetch("/api/items?pageSize=100&status=active");
       const data = await res.json();
       if (data.success) {
-        setItems(data.data || []);
+        setItems(data.data?.data || []);
       }
     } catch {
       // ignore

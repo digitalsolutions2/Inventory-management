@@ -107,7 +107,7 @@ export default function FoodicsAdminPage() {
 
   async function loadLocations() {
     try {
-      const res = await fetch("/api/locations?all=true");
+      const res = await fetch("/api/locations?tree=true");
       const data = await res.json();
       if (data.success) {
         setLocations(data.data || []);
