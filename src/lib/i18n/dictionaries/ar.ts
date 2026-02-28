@@ -340,6 +340,9 @@ export const ar: Dictionary = {
       convertSuccess: "تم تحويل الطلب إلى أمر شراء بنجاح",
       convertFailed: "فشل تحويل الطلب إلى أمر شراء",
       alreadyConverted: "يوجد أمر شراء مرتبط بهذا الطلب بالفعل",
+      selectLocationTitle: "اختر موقع التخزين",
+      selectLocationDesc: "اختر المكان الذي سيتم تخزين الأصناف المستلمة فيه",
+      locationRequired: "يرجى اختيار موقع التخزين",
     },
     optionalNotes: "ملاحظات اختيارية",
     receive: {

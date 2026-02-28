@@ -340,6 +340,9 @@ export const en: Dictionary = {
       convertSuccess: "Request converted to PO successfully",
       convertFailed: "Failed to convert request to PO",
       alreadyConverted: "A PO already exists for this request",
+      selectLocationTitle: "Select Storage Location",
+      selectLocationDesc: "Choose where to store the received items",
+      locationRequired: "Please select a storage location",
     },
     optionalNotes: "Optional notes",
     receive: {

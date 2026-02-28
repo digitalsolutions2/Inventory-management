@@ -11,6 +11,7 @@ import {
   Popconfirm,
   Input,
   Modal,
+  Select,
   Spin,
   App,
   Card,
@@ -127,6 +128,10 @@ export default function PODetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>("");
+  const [locations, setLocations] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
 
   const fetchPO = useCallback(async () => {
     setLoading(true);
@@ -161,23 +166,49 @@ export default function PODetailPage() {
     setActionLoading(false);
   };
 
-  const handleApprove = async () => {
-    const isWarehouseStep = po?.status === "PENDING_WAREHOUSE_APPROVAL";
+  const fetchLocations = async () => {
+    setLocationsLoading(true);
+    try {
+      const res = await fetch("/api/locations?pageSize=100");
+      const json = await res.json();
+      if (json.success) {
+        setLocations(json.data.data || json.data);
+      }
+    } catch {
+      // ignore
+    }
+    setLocationsLoading(false);
+  };
+
+  const handleApproveClick = () => {
+    if (po?.status === "PENDING_WAREHOUSE_APPROVAL") {
+      fetchLocations();
+      setLocationModalOpen(true);
+    } else {
+      handleApprove();
+    }
+  };
+
+  const handleApprove = async (locationId?: string) => {
     setActionLoading(true);
     try {
+      const bodyData: Record<string, string> = { action: "approve" };
+      if (locationId) bodyData.locationId = locationId;
+
       const res = await fetch(`/api/purchase-orders/${id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve" }),
+        body: JSON.stringify(bodyData),
       });
       const json = await res.json();
       if (json.success) {
         message.success(t.procurement.poApproved);
-        if (isWarehouseStep) {
-          router.push(`/procurement/${id}/receive`);
-        } else {
-          fetchPO();
+        if (locationId) {
+          message.success(t.procurement.receive.success);
+          setLocationModalOpen(false);
+          setSelectedLocationId("");
         }
+        fetchPO();
       } else {
         message.error(json.error || t.procurement.failedToApprove);
       }
@@ -185,6 +216,14 @@ export default function PODetailPage() {
       message.error(t.common.networkError);
     }
     setActionLoading(false);
+  };
+
+  const handleWarehouseApproveConfirm = () => {
+    if (!selectedLocationId) {
+      message.warning(t.procurement.approval.locationRequired);
+      return;
+    }
+    handleApprove(selectedLocationId);
   };
 
   const handleReject = async () => {
@@ -433,7 +472,7 @@ export default function PODetailPage() {
                   block
                   type="primary"
                   style={{ background: "#52c41a" }}
-                  onClick={handleApprove}
+                  onClick={handleApproveClick}
                   loading={actionLoading}
                 >
                   {t.common.approve}
@@ -496,6 +535,35 @@ export default function PODetailPage() {
           value={rejectReason}
           onChange={(e) => setRejectReason(e.target.value)}
           placeholder={t.procurement.rejectPlaceholder}
+        />
+      </Modal>
+
+      <Modal
+        title={t.procurement.approval.selectLocationTitle}
+        open={locationModalOpen}
+        onOk={handleWarehouseApproveConfirm}
+        onCancel={() => {
+          setLocationModalOpen(false);
+          setSelectedLocationId("");
+        }}
+        confirmLoading={actionLoading}
+        okText={t.common.approve}
+      >
+        <div className="mb-3 text-gray-600">
+          {t.procurement.approval.selectLocationDesc}
+        </div>
+        <Select
+          className="w-full"
+          placeholder={t.procurement.receive.selectLocation}
+          value={selectedLocationId || undefined}
+          onChange={(val) => setSelectedLocationId(val)}
+          loading={locationsLoading}
+          showSearch
+          optionFilterProp="label"
+          options={locations.map((loc) => ({
+            value: loc.id,
+            label: `${loc.code} - ${loc.name}`,
+          }))}
         />
       </Modal>
     </div>

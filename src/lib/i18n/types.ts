@@ -339,6 +339,9 @@ export interface Dictionary {
       convertSuccess: string;
       convertFailed: string;
       alreadyConverted: string;
+      selectLocationTitle: string;
+      selectLocationDesc: string;
+      locationRequired: string;
     };
     optionalNotes: string;
     receive: {
