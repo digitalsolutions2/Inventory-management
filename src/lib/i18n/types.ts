@@ -84,6 +84,9 @@ export interface Dictionary {
     reports: string;
     auditLogs: string;
     inventory: string;
+    users: string;
+    roles: string;
+    foodics: string;
   };
   breadcrumbs: {
     dashboard: string;
@@ -117,6 +120,9 @@ export interface Dictionary {
     detail: string;
     admin: string;
     auditLogs: string;
+    users: string;
+    roles: string;
+    foodics: string;
   };
   dashboard: {
     title: string;
@@ -1018,6 +1024,119 @@ export interface Dictionary {
       transfers: string;
       payments: string;
       logs: string;
+    };
+    users: {
+      title: string;
+      addUser: string;
+      editUser: string;
+      searchPlaceholder: string;
+      columns: {
+        fullName: string;
+        email: string;
+        role: string;
+        status: string;
+        createdAt: string;
+        actions: string;
+      };
+      deactivateConfirm: string;
+      userCreated: string;
+      userUpdated: string;
+      userDeactivated: string;
+      form: {
+        fullName: string;
+        fullNamePlaceholder: string;
+        email: string;
+        emailPlaceholder: string;
+        password: string;
+        passwordPlaceholder: string;
+        role: string;
+        rolePlaceholder: string;
+        isActive: string;
+      };
+      cannotDeactivateSelf: string;
+      failedToLoad: string;
+    };
+    roles: {
+      title: string;
+      addRole: string;
+      editRole: string;
+      searchPlaceholder: string;
+      columns: {
+        name: string;
+        description: string;
+        permissions: string;
+        users: string;
+        actions: string;
+      };
+      deleteConfirm: string;
+      cannotDeleteWithUsers: string;
+      roleCreated: string;
+      roleUpdated: string;
+      roleDeleted: string;
+      form: {
+        name: string;
+        namePlaceholder: string;
+        description: string;
+        descriptionPlaceholder: string;
+        permissions: string;
+        selectAll: string;
+        deselectAll: string;
+      };
+      failedToLoad: string;
+    };
+    foodics: {
+      title: string;
+      settings: {
+        title: string;
+        apiToken: string;
+        apiTokenPlaceholder: string;
+        defaultLocation: string;
+        selectLocation: string;
+        testConnection: string;
+        connected: string;
+        notConfigured: string;
+        saveSettings: string;
+        tokenSaved: string;
+        invalidToken: string;
+        connectionSuccess: string;
+        connectionFailed: string;
+        webhookUrl: string;
+        webhookUrlDesc: string;
+      };
+      mapping: {
+        title: string;
+        syncProducts: string;
+        columns: {
+          product: string;
+          sku: string;
+          mappedItem: string;
+          qtyPerSale: string;
+          actions: string;
+        };
+        mapProduct: string;
+        unmapConfirm: string;
+        mapped: string;
+        unmapped: string;
+        mappingCreated: string;
+        mappingDeleted: string;
+        noMappings: string;
+        selectItem: string;
+        qtyPerSaleLabel: string;
+        qtyPerSaleHelp: string;
+      };
+      logs: {
+        title: string;
+        columns: {
+          orderId: string;
+          status: string;
+          itemsDeducted: string;
+          time: string;
+        };
+        processed: string;
+        failed: string;
+        skipped: string;
+        noLogs: string;
+      };
     };
   };
 }

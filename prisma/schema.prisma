@@ -34,6 +34,10 @@ model Tenant {
   payments         Payment[]
   auditLogs        AuditLog[]
 
+  settings           TenantSettings?
+  foodicsMappings    FoodicsItemMapping[]
+  foodicsWebhookLogs FoodicsWebhookLog[]
+
   @@map("tenants")
 }
 
@@ -150,6 +154,7 @@ model Item {
   receivingLines   ReceivingLine[]
   requestLines     InternalRequestLine[]
   transferLines    TransferLine[]
+  foodicsMappings  FoodicsItemMapping[]
 
   @@unique([tenantId, code])
   @@index([tenantId, categoryId])
@@ -178,6 +183,7 @@ model Location {
   receivings         Receiving[]
   transfersFrom      Transfer[] @relation("transfer_from")
   transfersTo        Transfer[] @relation("transfer_to")
+  tenantSettings     TenantSettings[]
 
   @@unique([tenantId, code])
   @@index([tenantId, type])
@@ -616,4 +622,59 @@ model AuditLog {
   @@index([tenantId, userId])
   @@index([tenantId, createdAt])
   @@map("audit_logs")
+}
+
+// ============================================================
+// FOODICS INTEGRATION
+// ============================================================
+
+model TenantSettings {
+  id                       String    @id @default(uuid()) @db.Uuid
+  tenantId                 String    @unique @map("tenant_id") @db.Uuid
+  foodicsApiToken          String?   @map("foodics_api_token")
+  foodicsDefaultLocationId String?   @map("foodics_default_location_id") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  defaultLocation Location? @relation(fields: [foodicsDefaultLocationId], references: [id])
+
+  @@map("tenant_settings")
+}
+
+model FoodicsItemMapping {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  foodicsProductId    String   @map("foodics_product_id")
+  foodicsProductName  String   @map("foodics_product_name")
+  itemId              String   @map("item_id") @db.Uuid
+  quantityPerSale     Float    @default(1) @map("quantity_per_sale")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  @@unique([tenantId, foodicsProductId])
+  @@index([tenantId])
+  @@map("foodics_item_mappings")
+}
+
+model FoodicsWebhookLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  foodicsOrderId String   @map("foodics_order_id")
+  eventType      String   @map("event_type")
+  status         String   // processed, failed, skipped
+  itemsDeducted  Int      @default(0) @map("items_deducted")
+  payload        Json
+  errorMessage   String?  @map("error_message")
+  processedAt    DateTime @default(now()) @map("processed_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, foodicsOrderId])
+  @@index([tenantId, processedAt])
+  @@map("foodics_webhook_logs")
 }

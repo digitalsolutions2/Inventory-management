@@ -49,6 +49,9 @@ export function Header({ userContext }: HeaderProps) {
     order: t.breadcrumbs.order,
     admin: t.breadcrumbs.admin,
     "audit-logs": t.breadcrumbs.auditLogs,
+    users: t.breadcrumbs.users,
+    roles: t.breadcrumbs.roles,
+    foodics: t.breadcrumbs.foodics,
   };
 
   const handleSignOut = async () => {

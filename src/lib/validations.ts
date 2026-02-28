@@ -235,6 +235,51 @@ export const ExportExcelSchema = z.object({
 });
 
 // ============================================================
+// USERS & ROLES
+// ============================================================
+
+export const CreateUserSchema = z.object({
+  fullName: trimmedString.max(200),
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+  roleId: uuid,
+});
+
+export const UpdateUserSchema = z.object({
+  fullName: trimmedString.max(200).optional(),
+  roleId: uuid.optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const CreateRoleSchema = z.object({
+  name: trimmedString.max(100),
+  description: z.string().trim().max(500).optional().nullable().or(z.literal("")),
+  permissions: z.array(z.string().min(1)).min(1, "At least one permission is required"),
+});
+
+export const UpdateRoleSchema = z.object({
+  name: trimmedString.max(100).optional(),
+  description: z.string().trim().max(500).optional().nullable().or(z.literal("")),
+  permissions: z.array(z.string().min(1)).min(1).optional(),
+});
+
+// ============================================================
+// FOODICS INTEGRATION
+// ============================================================
+
+export const FoodicsSettingsSchema = z.object({
+  foodicsApiToken: z.string().trim().min(1).max(500).optional(),
+  foodicsDefaultLocationId: uuid.optional(),
+});
+
+export const FoodicsItemMappingSchema = z.object({
+  foodicsProductId: z.string().trim().min(1),
+  foodicsProductName: z.string().trim().min(1).max(300),
+  itemId: uuid,
+  quantityPerSale: z.number().positive().finite().default(1),
+});
+
+// ============================================================
 // HELPER: Parse and validate request body
 // ============================================================
 

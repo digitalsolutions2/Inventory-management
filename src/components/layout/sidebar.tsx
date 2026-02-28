@@ -13,7 +13,7 @@ export function Sidebar({ userContext }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
 
-  const navigation = [
+  const navigation: { name: string; href: string; icon: string; permission?: string }[] = [
     { name: t.nav.dashboard, href: "/dashboard", icon: "📊" },
     { name: t.nav.items, href: "/items", icon: "📦" },
     { name: t.nav.locations, href: "/locations", icon: "📍" },
@@ -26,6 +26,9 @@ export function Sidebar({ userContext }: SidebarProps) {
     { name: t.nav.storeOrdering, href: "/store/order", icon: "🛒" },
     { name: t.nav.finance, href: "/finance", icon: "💰" },
     { name: t.nav.reports, href: "/reports", icon: "📈" },
+    { name: t.nav.foodics, href: "/admin/foodics", icon: "🔗", permission: "foodics:settings" },
+    { name: t.nav.users, href: "/admin/users", icon: "👥", permission: "users:read" },
+    { name: t.nav.roles, href: "/admin/roles", icon: "🔐", permission: "users:read" },
     { name: t.nav.auditLogs, href: "/admin/audit-logs", icon: "🔍" },
   ];
 
@@ -36,7 +39,7 @@ export function Sidebar({ userContext }: SidebarProps) {
         <p className="text-xs text-gray-500 mt-1">{userContext.tenantName}</p>
       </div>
       <nav className="flex-1 py-4 overflow-y-auto">
-        {navigation.map((item) => {
+        {navigation.filter((item) => !item.permission || userContext.permissions.includes(item.permission)).map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
