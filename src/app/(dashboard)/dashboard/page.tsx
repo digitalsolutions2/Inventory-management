@@ -727,7 +727,7 @@ export default function DashboardPage() {
               dot: ACTIVITY_ICONS[log.entityType] || (
                 <CheckCircleOutlined style={{ color: "#8c8c8c" }} />
               ),
-              children: (
+              content: (
                 <div className="flex justify-between items-start">
                   <div>
                     <Tag className="mr-1">{log.action}</Tag>
