@@ -724,7 +724,7 @@ export default function DashboardPage() {
         ) : (
           <Timeline
             items={recentActivity.slice(0, 10).map((log) => ({
-              dot: ACTIVITY_ICONS[log.entityType] || (
+              icon: ACTIVITY_ICONS[log.entityType] || (
                 <CheckCircleOutlined style={{ color: "#8c8c8c" }} />
               ),
               content: (
