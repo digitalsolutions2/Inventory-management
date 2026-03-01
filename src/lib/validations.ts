@@ -243,12 +243,14 @@ export const CreateUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
   roleId: uuid,
+  locationId: uuid.optional().nullable(),
 });
 
 export const UpdateUserSchema = z.object({
   fullName: trimmedString.max(200).optional(),
   roleId: uuid.optional(),
   isActive: z.boolean().optional(),
+  locationId: uuid.optional().nullable(),
 });
 
 export const CreateRoleSchema = z.object({
@@ -261,6 +263,53 @@ export const UpdateRoleSchema = z.object({
   name: trimmedString.max(100).optional(),
   description: z.string().trim().max(500).optional().nullable().or(z.literal("")),
   permissions: z.array(z.string().min(1)).min(1).optional(),
+});
+
+// ============================================================
+// RECIPES / BOM
+// ============================================================
+
+const RecipeLineSchema = z.object({
+  itemId: uuid,
+  quantity: positiveFloat,
+  notes: optionalString,
+});
+
+export const CreateRecipeSchema = z.object({
+  code: trimmedString.max(50),
+  name: trimmedString.max(200),
+  description: optionalString,
+  categoryId: uuid.optional().nullable(),
+  yieldQty: positiveFloat.default(1),
+  yieldUom: z.string().trim().min(1).max(20).default("EA"),
+  lines: z.array(RecipeLineSchema).min(1, "At least one ingredient is required"),
+});
+
+export const UpdateRecipeSchema = z.object({
+  code: trimmedString.max(50).optional(),
+  name: trimmedString.max(200).optional(),
+  description: optionalString,
+  categoryId: uuid.optional().nullable(),
+  yieldQty: positiveFloat.optional(),
+  yieldUom: z.string().trim().min(1).max(20).optional(),
+  isActive: z.boolean().optional(),
+  lines: z.array(RecipeLineSchema).min(1).optional(),
+});
+
+// ============================================================
+// DAILY PREP ORDERS
+// ============================================================
+
+const PrepOrderLineSchema = z.object({
+  recipeId: uuid,
+  quantity: positiveFloat,
+  notes: optionalString,
+});
+
+export const CreatePrepOrderSchema = z.object({
+  prepDate: z.string().min(1, "Prep date is required"),
+  lines: z.array(PrepOrderLineSchema).min(1, "At least one recipe is required"),
+  notes: optionalString,
 });
 
 // ============================================================

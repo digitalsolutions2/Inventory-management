@@ -37,6 +37,8 @@ model Tenant {
   settings           TenantSettings?
   foodicsMappings    FoodicsItemMapping[]
   foodicsWebhookLogs FoodicsWebhookLog[]
+  recipes            Recipe[]
+  dailyPrepOrders    DailyPrepOrder[]
 
   @@map("tenants")
 }
@@ -51,8 +53,11 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  role   UserRole?
+  locationId   String?  @map("location_id") @db.Uuid
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  role     UserRole?
+  location Location? @relation(fields: [locationId], references: [id])
 
   // Relations for workflow actions
   createdPOs              PurchaseOrder[]    @relation("po_created_by")
@@ -73,6 +78,7 @@ model User {
   transfersReceived   Transfer[]         @relation("transfer_received_by")
   paymentsRecorded    Payment[]
   auditLogs           AuditLog[]
+  prepOrdersCreated   DailyPrepOrder[]   @relation("prep_order_created_by")
 
   @@unique([tenantId, email])
   @@map("users")
@@ -124,6 +130,7 @@ model Category {
   parent   Category?  @relation("category_tree", fields: [parentId], references: [id])
   children Category[] @relation("category_tree")
   items    Item[]
+  recipes  Recipe[]
 
   @@unique([tenantId, name])
   @@map("categories")
@@ -155,6 +162,7 @@ model Item {
   requestLines     InternalRequestLine[]
   transferLines    TransferLine[]
   foodicsMappings  FoodicsItemMapping[]
+  recipeLines      RecipeLine[]
 
   @@unique([tenantId, code])
   @@index([tenantId, categoryId])
@@ -184,6 +192,8 @@ model Location {
   transfersFrom      Transfer[] @relation("transfer_from")
   transfersTo        Transfer[] @relation("transfer_to")
   tenantSettings     TenantSettings[]
+  users              User[]
+  dailyPrepOrders    DailyPrepOrder[]
 
   @@unique([tenantId, code])
   @@index([tenantId, type])
@@ -531,7 +541,8 @@ model Transfer {
   fulfilledBy  User?    @relation("transfer_fulfilled_by", fields: [fulfilledById], references: [id])
   receivedBy   User?    @relation("transfer_received_by", fields: [receivedById], references: [id])
 
-  lines TransferLine[]
+  lines           TransferLine[]
+  dailyPrepOrders DailyPrepOrder[]
 
   @@unique([tenantId, transferNumber])
   @@index([tenantId, status])
@@ -622,6 +633,96 @@ model AuditLog {
   @@index([tenantId, userId])
   @@index([tenantId, createdAt])
   @@map("audit_logs")
+}
+
+// ============================================================
+// RECIPES / BOM
+// ============================================================
+
+model Recipe {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  code        String
+  name        String
+  description String?
+  categoryId  String?  @map("category_id") @db.Uuid
+  yieldQty    Float    @default(1) @map("yield_qty")
+  yieldUom    String   @default("EA") @map("yield_uom")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+  lines    RecipeLine[]
+  prepOrderLines DailyPrepOrderLine[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, isActive])
+  @@map("recipes")
+}
+
+model RecipeLine {
+  id       String @id @default(uuid()) @db.Uuid
+  recipeId String @map("recipe_id") @db.Uuid
+  itemId   String @map("item_id") @db.Uuid
+  quantity Float
+  notes    String?
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  @@map("recipe_lines")
+}
+
+// ============================================================
+// DAILY PREP ORDERS
+// ============================================================
+
+model DailyPrepOrder {
+  id          String          @id @default(uuid()) @db.Uuid
+  tenantId    String          @map("tenant_id") @db.Uuid
+  orderNumber String          @map("order_number")
+  locationId  String          @map("location_id") @db.Uuid
+  status      PrepOrderStatus @default(DRAFT)
+  prepDate    DateTime        @map("prep_date") @db.Date
+  notes       String?
+  createdById String          @map("created_by_id") @db.Uuid
+  transferId  String?         @map("transfer_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  location  Location  @relation(fields: [locationId], references: [id])
+  createdBy User      @relation("prep_order_created_by", fields: [createdById], references: [id])
+  transfer  Transfer? @relation(fields: [transferId], references: [id])
+  lines     DailyPrepOrderLine[]
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, locationId])
+  @@map("daily_prep_orders")
+}
+
+model DailyPrepOrderLine {
+  id          String @id @default(uuid()) @db.Uuid
+  prepOrderId String @map("prep_order_id") @db.Uuid
+  recipeId    String @map("recipe_id") @db.Uuid
+  quantity    Float
+  notes       String?
+
+  prepOrder DailyPrepOrder @relation(fields: [prepOrderId], references: [id], onDelete: Cascade)
+  recipe    Recipe         @relation(fields: [recipeId], references: [id])
+
+  @@map("daily_prep_order_lines")
+}
+
+enum PrepOrderStatus {
+  DRAFT
+  SUBMITTED
+  TRANSFER_CREATED
+  COMPLETED
+  CANCELLED
 }
 
 // ============================================================

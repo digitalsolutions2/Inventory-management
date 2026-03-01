@@ -17,6 +17,7 @@ export async function getCurrentUser(): Promise<UserContext | null> {
       include: {
         role: { include: { role: true } },
         tenant: true,
+        location: { select: { id: true, name: true, type: true } },
       },
     });
 
@@ -30,6 +31,9 @@ export async function getCurrentUser(): Promise<UserContext | null> {
       tenantName: dbUser.tenant.name,
       role: dbUser.role?.role.name || "user",
       permissions: (dbUser.role?.role.permissions as string[]) || [],
+      locationId: dbUser.location?.id || null,
+      locationName: dbUser.location?.name || null,
+      locationType: dbUser.location?.type || null,
     };
   } catch {
     return null;

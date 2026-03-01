@@ -142,7 +142,7 @@ export default function FulfillRequestPage() {
   }
 
   if (!request) {
-    return <Alert type="error" message={t.requests.fulfill.requestNotFound} showIcon />;
+    return <Alert type="error" title={t.requests.fulfill.requestNotFound} showIcon />;
   }
 
   const isSameUser = request.createdBy.id === user?.id;

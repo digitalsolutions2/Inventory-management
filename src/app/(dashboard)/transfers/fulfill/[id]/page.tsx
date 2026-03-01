@@ -94,7 +94,7 @@ export default function FulfillTransferPage() {
   }
 
   if (!transfer) {
-    return <Alert type="error" message={t.transfers.fulfill.transferNotFound} showIcon />;
+    return <Alert type="error" title={t.transfers.fulfill.transferNotFound} showIcon />;
   }
 
   const columns: ColumnsType<TransferLine> = [

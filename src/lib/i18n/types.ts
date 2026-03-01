@@ -87,6 +87,12 @@ export interface Dictionary {
     users: string;
     roles: string;
     foodics: string;
+    storeDashboard: string;
+    myInventory: string;
+    browseStores: string;
+    storeTransfers: string;
+    dailyPrep: string;
+    recipes: string;
   };
   breadcrumbs: {
     dashboard: string;
@@ -123,6 +129,10 @@ export interface Dictionary {
     users: string;
     roles: string;
     foodics: string;
+    browse: string;
+    dailyPrep: string;
+    recipes: string;
+    inventory: string;
   };
   dashboard: {
     title: string;
@@ -1138,5 +1148,107 @@ export interface Dictionary {
         noLogs: string;
       };
     };
+  };
+  storePortal: {
+    dashboard: {
+      title: string;
+      totalItems: string;
+      totalValue: string;
+      lowStock: string;
+      outOfStock: string;
+      pendingIncoming: string;
+      pendingOutgoing: string;
+      lowStockAlerts: string;
+      recentPrepOrders: string;
+      quickActions: string;
+      createTransfer: string;
+      createPrepOrder: string;
+      browseStores: string;
+      viewInventory: string;
+    };
+    inventory: {
+      title: string;
+      searchPlaceholder: string;
+      stockFilter: string;
+      allItems: string;
+      lowStock: string;
+      outOfStock: string;
+    };
+    browse: {
+      title: string;
+      selectStore: string;
+      requestTransfer: string;
+      readOnly: string;
+      noStoreSelected: string;
+    };
+    transfers: {
+      title: string;
+      incoming: string;
+      outgoing: string;
+      createTransfer: string;
+      selectSource: string;
+      selectItems: string;
+      storeToStoreNote: string;
+    };
+    dailyPrep: {
+      title: string;
+      createOrder: string;
+      prepDate: string;
+      selectRecipes: string;
+      addRecipe: string;
+      materialCalculation: string;
+      totalMaterials: string;
+      linkedTransfer: string;
+      orderNumber: string;
+      noOrders: string;
+      recipesOrdered: string;
+      materialsNeeded: string;
+      orderCreated: string;
+      failedToCreate: string;
+      failedToLoad: string;
+      statusLabels: {
+        DRAFT: string;
+        SUBMITTED: string;
+        TRANSFER_CREATED: string;
+        COMPLETED: string;
+        CANCELLED: string;
+      };
+    };
+  };
+  recipes: {
+    title: string;
+    addRecipe: string;
+    editRecipe: string;
+    searchPlaceholder: string;
+    columns: {
+      code: string;
+      name: string;
+      category: string;
+      yield: string;
+      ingredients: string;
+      status: string;
+      actions: string;
+    };
+    form: {
+      code: string;
+      codePlaceholder: string;
+      name: string;
+      namePlaceholder: string;
+      description: string;
+      category: string;
+      categoryPlaceholder: string;
+      yieldQty: string;
+      yieldUom: string;
+      ingredients: string;
+      addIngredient: string;
+      selectItem: string;
+      quantity: string;
+      noIngredients: string;
+    };
+    recipeCreated: string;
+    recipeUpdated: string;
+    recipeDeactivated: string;
+    deactivateConfirm: string;
+    failedToLoad: string;
   };
 }

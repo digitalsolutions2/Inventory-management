@@ -187,7 +187,7 @@ export default function QCInspectPage() {
   }
 
   if (!receiving) {
-    return <Alert type="error" message={t.receiving.qc.receivingNotFound} showIcon />;
+    return <Alert type="error" title={t.receiving.qc.receivingNotFound} showIcon />;
   }
 
   const isSameUser = receiving.procVerifiedBy?.id === user?.id;

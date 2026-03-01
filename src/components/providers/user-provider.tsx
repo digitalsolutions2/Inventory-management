@@ -19,3 +19,8 @@ export function UserProvider({
 
   return <>{children}</>;
 }
+
+export function useUser() {
+  const userContext = useUserStore((s) => s.user);
+  return { userContext };
+}

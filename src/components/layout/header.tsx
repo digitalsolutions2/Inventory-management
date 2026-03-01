@@ -52,6 +52,10 @@ export function Header({ userContext }: HeaderProps) {
     users: t.breadcrumbs.users,
     roles: t.breadcrumbs.roles,
     foodics: t.breadcrumbs.foodics,
+    browse: t.breadcrumbs.browse,
+    "daily-prep": t.breadcrumbs.dailyPrep,
+    recipes: t.breadcrumbs.recipes,
+    inventory: t.breadcrumbs.inventory,
   };
 
   const handleSignOut = async () => {
@@ -103,6 +107,11 @@ export function Header({ userContext }: HeaderProps) {
           </div>
           <div className="text-xs text-gray-400 capitalize">
             {userContext.role}
+            {userContext.locationName && (
+              <span className="text-blue-500 ml-1">
+                &middot; {userContext.locationName}
+              </span>
+            )}
           </div>
         </div>
         <button

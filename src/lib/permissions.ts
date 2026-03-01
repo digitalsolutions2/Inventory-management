@@ -122,6 +122,26 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    key: "store-portal",
+    label: "Store Portal",
+    permissions: [
+      { key: "store:dashboard", label: "View store dashboard" },
+      { key: "store:inventory", label: "View store inventory" },
+      { key: "store:browse", label: "Browse other stores' inventory" },
+      { key: "store:transfer_request", label: "Request store-to-store transfers" },
+      { key: "store:daily_prep", label: "Create daily prep orders" },
+    ],
+  },
+  {
+    key: "recipes",
+    label: "Recipes / BOM",
+    permissions: [
+      { key: "recipes:read", label: "View recipes" },
+      { key: "recipes:write", label: "Create & edit recipes" },
+      { key: "recipes:delete", label: "Deactivate recipes" },
+    ],
+  },
+  {
     key: "audit",
     label: "Audit Logs",
     permissions: [

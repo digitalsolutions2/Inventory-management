@@ -130,7 +130,7 @@ export default function ProcurementVerifyPage() {
   }
 
   if (!po) {
-    return <Alert type="error" message={t.procurement.notFound} showIcon />;
+    return <Alert type="error" title={t.procurement.notFound} showIcon />;
   }
 
   const isSameUser = po.createdBy.id === user?.id;

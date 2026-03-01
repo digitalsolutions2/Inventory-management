@@ -149,7 +149,7 @@ export default function WarehouseReceivePage() {
   }
 
   if (!receiving) {
-    return <Alert type="error" message={t.receiving.warehouse.receivingNotFound} showIcon />;
+    return <Alert type="error" title={t.receiving.warehouse.receivingNotFound} showIcon />;
   }
 
   const isSameAsProcUser = receiving.procVerifiedBy?.id === user?.id;

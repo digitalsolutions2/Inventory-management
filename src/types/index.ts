@@ -6,6 +6,9 @@ export interface UserContext {
   tenantName: string;
   role: string;
   permissions: string[];
+  locationId: string | null;
+  locationName: string | null;
+  locationType: string | null;
 }
 
 export interface ApiResponse<T = unknown> {

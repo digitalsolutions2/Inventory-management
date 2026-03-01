@@ -123,7 +123,7 @@ export default function ReceiveTransferPage() {
   }
 
   if (!transfer) {
-    return <Alert type="error" message={t.transfers.receive.transferNotFound} showIcon />;
+    return <Alert type="error" title={t.transfers.receive.transferNotFound} showIcon />;
   }
 
   // Determine step status

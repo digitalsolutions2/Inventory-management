@@ -24,9 +24,17 @@ export async function GET(request: NextRequest) {
     );
     const status = searchParams.get("status") || "";
 
+    const locationId = searchParams.get("locationId") || "";
+
     const where = {
       tenantId: user.tenantId,
       ...(status && { status: { in: status.split(",") as never[] } }),
+      ...(locationId && {
+        OR: [
+          { fromLocationId: locationId },
+          { toLocationId: locationId },
+        ],
+      }),
     };
 
     const [transfers, total] = await Promise.all([
@@ -119,7 +127,11 @@ export async function POST(request: NextRequest) {
     const transferNumber = `TRF-${String(count + 1).padStart(5, "0")}`;
 
     // Determine if approval is required
-    const needsApproval = totalValue > APPROVAL_THRESHOLD;
+    // Store-to-store transfers always require approval
+    const storeTypes = ["STORE", "KITCHEN"];
+    const isStoreToStore =
+      storeTypes.includes(fromLoc.type) && storeTypes.includes(toLoc.type);
+    const needsApproval = isStoreToStore || totalValue > APPROVAL_THRESHOLD;
     const initialStatus = needsApproval ? "PENDING" : "APPROVED";
 
     const transfer = await prisma.transfer.create({

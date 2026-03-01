@@ -13,7 +13,20 @@ export function Sidebar({ userContext }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
 
-  const navigation: { name: string; href: string; icon: string; permission?: string }[] = [
+  const isStoreUser =
+    userContext.locationType === "STORE" ||
+    userContext.locationType === "KITCHEN";
+
+  const storeNavigation: { name: string; href: string; icon: string; permission?: string }[] = [
+    { name: t.nav.storeDashboard, href: "/store/dashboard", icon: "📊", permission: "store:dashboard" },
+    { name: t.nav.myInventory, href: "/store/inventory", icon: "🗃️", permission: "store:inventory" },
+    { name: t.nav.browseStores, href: "/store/browse", icon: "🔍", permission: "store:browse" },
+    { name: t.nav.storeTransfers, href: "/store/transfers", icon: "🔄", permission: "store:transfer_request" },
+    { name: t.nav.dailyPrep, href: "/store/daily-prep", icon: "🍳", permission: "store:daily_prep" },
+    { name: t.nav.storeOrdering, href: "/store/order", icon: "🛒" },
+  ];
+
+  const fullNavigation: { name: string; href: string; icon: string; permission?: string }[] = [
     { name: t.nav.dashboard, href: "/dashboard", icon: "📊" },
     { name: t.nav.items, href: "/items", icon: "📦" },
     { name: t.nav.locations, href: "/locations", icon: "📍" },
@@ -26,17 +39,23 @@ export function Sidebar({ userContext }: SidebarProps) {
     { name: t.nav.storeOrdering, href: "/store/order", icon: "🛒" },
     { name: t.nav.finance, href: "/finance", icon: "💰" },
     { name: t.nav.reports, href: "/reports", icon: "📈" },
+    { name: t.nav.recipes, href: "/admin/recipes", icon: "📖", permission: "recipes:read" },
     { name: t.nav.foodics, href: "/admin/foodics", icon: "🔗", permission: "foodics:settings" },
     { name: t.nav.users, href: "/admin/users", icon: "👥", permission: "users:read" },
     { name: t.nav.roles, href: "/admin/roles", icon: "🔐", permission: "users:read" },
     { name: t.nav.auditLogs, href: "/admin/audit-logs", icon: "🔍" },
   ];
 
+  const navigation = isStoreUser ? storeNavigation : fullNavigation;
+
   return (
     <div className="w-64 bg-white shadow-md flex flex-col">
       <div className="p-4 border-b">
         <h1 className="text-lg font-bold text-gray-900">{t.nav.supplyChainERP}</h1>
         <p className="text-xs text-gray-500 mt-1">{userContext.tenantName}</p>
+        {userContext.locationName && (
+          <p className="text-xs text-blue-600 mt-0.5">{userContext.locationName}</p>
+        )}
       </div>
       <nav className="flex-1 py-4 overflow-y-auto">
         {navigation.filter((item) => !item.permission || userContext.permissions.includes(item.permission)).map((item) => {

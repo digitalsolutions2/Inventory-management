@@ -129,7 +129,7 @@ export default function ConfirmRequestPage() {
   }
 
   if (!request) {
-    return <Alert type="error" message={t.requests.confirm.requestNotFound} showIcon />;
+    return <Alert type="error" title={t.requests.confirm.requestNotFound} showIcon />;
   }
 
   const columns: ColumnsType<RequestLine> = [
